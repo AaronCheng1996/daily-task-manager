@@ -1,0 +1,164 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components'; 
+@import 'tailwindcss/utilities';
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply text-gray-900;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+    min-height: 100vh;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+  
+  button {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg transition-all duration-200;
+  }
+  
+  input, textarea, select {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 active:scale-95;
+    @apply shadow-soft hover:shadow-medium;
+  }
+  
+  .btn-primary {
+    @apply btn text-white relative overflow-hidden;
+    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%);
+    @apply hover:shadow-strong;
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #4f46e5 100%);
+  }
+  
+  .btn-secondary {
+    @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400;
+    @apply shadow-soft hover:shadow-medium;
+  }
+  
+  .btn-success {
+    @apply btn text-white relative overflow-hidden;
+    background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+  }
+  
+  .btn-success:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+  }
+  
+  .btn-danger {
+    @apply btn text-white relative overflow-hidden;
+    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  }
+  
+  .btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);
+  }
+  
+  .form-input {
+    @apply block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-soft;
+    @apply bg-white/80 backdrop-blur-sm focus:bg-white;
+    @apply transition-all duration-200;
+  }
+  
+  .card {
+    @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-soft border border-white/50 p-6;
+    @apply hover:shadow-medium transition-all duration-300;
+    @apply animate-fade-in;
+  }
+  
+  .card-gradient {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+    @apply backdrop-blur-sm border border-white/40 shadow-medium;
+  }
+  
+  .card-gradient::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(135deg, rgba(14,165,233,0.1) 0%, rgba(168,85,247,0.1) 100%);
+  }
+  
+  .card-gradient:hover::before {
+    @apply opacity-100;
+  }
+  
+  .stat-card {
+    @apply card-gradient p-4 text-center;
+    @apply hover:scale-105 transform transition-all duration-300;
+  }
+  
+  .stat-card-primary {
+    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+    @apply text-white border-0;
+  }
+  
+  .stat-card-success {
+    background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+    @apply text-white border-0;
+  }
+  
+  .stat-card-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    @apply text-white border-0;
+  }
+  
+  .stat-card-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    @apply text-white border-0;
+  }
+  
+  .task-card {
+    @apply bg-white/95 backdrop-blur-sm rounded-xl shadow-soft border border-white/60 p-4;
+    @apply hover:shadow-medium hover:scale-[1.01] transition-all duration-300;
+    @apply animate-slide-up;
+  }
+  
+  .task-card-completed {
+    @apply bg-gradient-to-r from-green-50 to-emerald-50 border-green-200;
+  }
+  
+  .gradient-text {
+    background: linear-gradient(135deg, #0ea5e9 0%, #a855f7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .glass-effect {
+    @apply bg-white/20 backdrop-blur-md border border-white/30;
+  }
+  
+  .nav-glass {
+    @apply bg-white/95 backdrop-blur-lg border border-white/50;
+    @apply shadow-soft;
+  }
+  
+  .nav-link {
+    @apply flex items-center px-4 py-2 rounded-xl font-medium text-gray-600;
+    @apply hover:bg-white/60 hover:text-primary-700 transition-all duration-200;
+    @apply border border-transparent hover:border-white/40;
+  }
+  
+  .nav-link-active {
+    @apply bg-white/80 text-primary-700 border-primary-200/50;
+    @apply shadow-soft;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}

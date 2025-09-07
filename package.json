@@ -1,0 +1,39 @@
+{
+  "name": "daily-task-manager",
+  "version": "1.0.0",
+  "description": "A comprehensive task management system with 4 task types",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && npm test",
+    "install:all": "npm install && npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:clean": "docker-compose down -v --rmi all"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "keywords": [
+    "task-management",
+    "vue",
+    "nodejs",
+    "postgresql",
+    "docker"
+  ],
+  "author": "",
+  "license": "MIT"
+}

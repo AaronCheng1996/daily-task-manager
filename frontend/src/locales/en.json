@@ -1,0 +1,64 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "loginSuccess": "Login successful",
+    "registerSuccess": "Registration successful",
+    "invalidCredentials": "Invalid credentials",
+    "userExists": "User already exists"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "createTask": "Create Task",
+    "editTask": "Edit Task",
+    "deleteTask": "Delete Task",
+    "completeTask": "Complete Task",
+    "uncompleteTask": "Mark as Incomplete",
+    "taskTitle": "Task Title",
+    "description": "Description",
+    "importance": "Importance",
+    "dueDate": "Due Date",
+    "completed": "Completed",
+    "overdue": "Overdue",
+    "noTasks": "No tasks found",
+    "taskTypes": {
+      "HABIT": "Habit",
+      "DAILY_TASK": "Daily Task",
+      "TODO": "Todo",
+      "LONG_TERM": "Long-term"
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "tasks": "Tasks",
+    "profile": "Profile",
+    "dashboard": "Dashboard"
+  },
+  "profile": {
+    "title": "Profile",
+    "updateProfile": "Update Profile",
+    "language": "Language",
+    "timezone": "Timezone"
+  }
+}
