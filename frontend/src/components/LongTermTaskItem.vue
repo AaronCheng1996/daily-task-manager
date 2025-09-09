@@ -158,15 +158,49 @@
 
             <!-- 里程碑內容 -->
             <div class="flex-1 min-w-0">
-              <h5 class="text-sm font-medium" :class="{ 'line-through text-gray-500': milestone.is_completed }">
-                {{ milestone.title }}
-              </h5>
-              <p v-if="milestone.description" class="text-xs text-gray-600 mt-1">
-                {{ milestone.description }}
-              </p>
-              <span v-if="milestone.completion_date" class="text-xs text-gray-400">
-                Completed: {{ formatDate(milestone.completion_date) }}
-              </span>
+              <!-- 編輯模式 -->
+              <div v-if="editingMilestone?.id === milestone.id" class="space-y-2">
+                <input
+                  v-model="editMilestoneForm.title"
+                  class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Milestone title"
+                  @keyup.enter="saveEditMilestone"
+                />
+                <textarea
+                  v-model="editMilestoneForm.description"
+                  class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  rows="2"
+                  placeholder="Description (optional)"
+                ></textarea>
+                <div class="flex space-x-2">
+                  <button
+                    @click="saveEditMilestone"
+                    :disabled="!editMilestoneForm.title.trim() || loadingMilestone"
+                    class="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {{ loadingMilestone ? 'Saving...' : 'Save' }}
+                  </button>
+                  <button
+                    @click="cancelEditMilestone"
+                    class="text-xs px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+              
+              <!-- 顯示模式 -->
+              <div v-else>
+                <h5 class="text-sm font-medium" :class="{ 'line-through text-gray-500': milestone.is_completed }">
+                  {{ milestone.title }}
+                </h5>
+                <p v-if="milestone.description" class="text-xs text-gray-600 mt-1">
+                  {{ milestone.description }}
+                </p>
+                <span v-if="milestone.completion_date" class="text-xs text-gray-400">
+                  Completed: {{ formatDate(milestone.completion_date) }}
+                </span>
+              </div>
             </div>
 
             <!-- 里程碑操作按鈕 -->
@@ -302,14 +336,24 @@ const createMilestone = async () => {
       order_index: milestones.value.length
     })
     
+    // 直接更新本地狀態，避免重新載入
     milestones.value.push(response.milestone)
-    await loadData() // 重新載入統計
+    
+    // 重新計算統計數據
+    if (statistics.value) {
+      statistics.value.totalMilestones = milestones.value.length
+      statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
+      statistics.value.progress = statistics.value.totalMilestones > 0 
+        ? (statistics.value.completedMilestones / statistics.value.totalMilestones) * 100 
+        : 0
+    }
     
     // 重置表單
     newMilestone.value = { title: '', description: '' }
     showAddMilestone.value = false
     
-    emit('updated')
+    // 只在需要時通知父組件更新（不頻繁調用）
+    // emit('updated')
   } catch (error) {
     console.error('Failed to create milestone:', error)
     alert('Failed to create milestone')
@@ -323,8 +367,28 @@ const toggleMilestone = async (milestoneId: string) => {
   
   try {
     await taskApi.toggleMilestoneCompletion(milestoneId)
-    await loadData() // 重新載入數據
-    emit('updated')
+    
+    // 更新本地里程碑狀態
+    const milestone = milestones.value.find(m => m.id === milestoneId)
+    if (milestone) {
+      milestone.is_completed = !milestone.is_completed
+      if (milestone.is_completed) {
+        milestone.completion_date = new Date().toISOString()
+      } else {
+        milestone.completion_date = null
+      }
+    }
+    
+    // 重新計算統計數據
+    if (statistics.value) {
+      statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
+      statistics.value.progress = statistics.value.totalMilestones > 0 
+        ? (statistics.value.completedMilestones / statistics.value.totalMilestones) * 100 
+        : 0
+    }
+    
+    // 不需要頻繁通知父組件
+    // emit('updated')
   } catch (error) {
     console.error('Failed to toggle milestone:', error)
     alert('Failed to update milestone')
@@ -340,8 +404,23 @@ const deleteMilestone = async (milestoneId: string) => {
   
   try {
     await taskApi.deleteMilestone(milestoneId)
-    await loadData() // 重新載入數據
-    emit('updated')
+    
+    // 從本地列表中移除里程碑
+    const index = milestones.value.findIndex(m => m.id === milestoneId)
+    if (index > -1) {
+      milestones.value.splice(index, 1)
+    }
+    
+    // 重新計算統計數據
+    if (statistics.value) {
+      statistics.value.totalMilestones = milestones.value.length
+      statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
+      statistics.value.progress = statistics.value.totalMilestones > 0 
+        ? (statistics.value.completedMilestones / statistics.value.totalMilestones) * 100 
+        : 0
+    }
+    
+    // emit('updated') // 避免頻繁更新
   } catch (error) {
     console.error('Failed to delete milestone:', error)
     alert('Failed to delete milestone')
@@ -350,9 +429,51 @@ const deleteMilestone = async (milestoneId: string) => {
   }
 }
 
+const editingMilestone = ref<Milestone | null>(null)
+const editMilestoneForm = ref({
+  title: '',
+  description: ''
+})
+
 const startEditMilestone = (milestone: Milestone) => {
-  // TODO: 實現里程碑編輯功能
-  console.log('Edit milestone:', milestone)
+  editingMilestone.value = milestone
+  editMilestoneForm.value = {
+    title: milestone.title,
+    description: milestone.description || ''
+  }
+}
+
+const saveEditMilestone = async () => {
+  if (!editingMilestone.value || !editMilestoneForm.value.title.trim()) return
+  
+  loadingMilestone.value = true
+  
+  try {
+    await taskApi.updateMilestone(editingMilestone.value.id, {
+      title: editMilestoneForm.value.title,
+      description: editMilestoneForm.value.description || undefined
+    })
+    
+    // 直接更新本地里程碑數據
+    const milestone = milestones.value.find(m => m.id === editingMilestone.value!.id)
+    if (milestone) {
+      milestone.title = editMilestoneForm.value.title
+      milestone.description = editMilestoneForm.value.description || undefined
+    }
+    
+    editingMilestone.value = null
+    // emit('updated') // 避免頻繁更新
+  } catch (error) {
+    console.error('Failed to update milestone:', error)
+    alert('Failed to update milestone')
+  } finally {
+    loadingMilestone.value = false
+  }
+}
+
+const cancelEditMilestone = () => {
+  editingMilestone.value = null
+  editMilestoneForm.value = { title: '', description: '' }
 }
 
 const cancelAddMilestone = () => {

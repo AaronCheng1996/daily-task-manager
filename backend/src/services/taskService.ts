@@ -193,7 +193,8 @@ export class TaskService {
       if (updatedTask.task_type === TaskType.DAILY_TASK) {
         // 對於每日任務，使用 DailyTaskService 處理複雜的重複邏輯
         await client.query('ROLLBACK');
-        const dailyResult = await DailyTaskService.toggleDailyTaskCompletion(taskId, userId);
+        const targetDate = new Date(); // 使用當前日期作為目標日期
+        const dailyResult = await DailyTaskService.toggleDailyTaskCompletion(taskId, userId, targetDate);
         return dailyResult.task;
       }
       

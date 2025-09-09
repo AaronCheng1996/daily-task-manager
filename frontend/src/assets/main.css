@@ -118,6 +118,11 @@
     @apply text-white border-0;
   }
   
+  .stat-card-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    @apply text-white border-0;
+  }
+  
   .task-card {
     @apply bg-white/95 backdrop-blur-sm rounded-xl shadow-soft border border-white/60 p-4;
     @apply hover:shadow-medium hover:scale-[1.01] transition-all duration-300;

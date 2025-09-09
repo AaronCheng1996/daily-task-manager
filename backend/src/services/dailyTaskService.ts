@@ -245,26 +245,60 @@ export class DailyTaskService {
     let currentConsecutiveMissed = 0;
     let maxConsecutiveCompleted = 0;
     let tempConsecutiveCompleted = 0;
+    
+    // 將日期按時間順序排序（最新的在前）
+    const sortedDates = shouldAppearDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
-    for (const dateStr of shouldAppearDates.reverse()) { // 從最新日期開始
+    // 從最新日期開始，計算當前的連續狀態
+    let foundFirstStatus = false;
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    for (const dateStr of sortedDates) {
       const wasCompleted = completionMap.get(dateStr) || false;
+      const isToday = dateStr === todayStr;
       
-      if (wasCompleted) {
-        if (currentConsecutiveMissed > 0) {
-          // 如果之前有連續錯過，重置錯過計數
+      // 如果是今天且沒有完成記錄，不算作錯過（可能還沒到截止時間）
+      const shouldCountAsMissed = !wasCompleted && !isToday;
+      
+      if (!foundFirstStatus) {
+        // 第一個找到的狀態決定當前的連續類型
+        foundFirstStatus = true;
+        if (wasCompleted) {
+          currentConsecutiveCompleted = 1;
+          tempConsecutiveCompleted = 1;
           currentConsecutiveMissed = 0;
-        }
-        currentConsecutiveCompleted++;
-        tempConsecutiveCompleted++;
-        maxConsecutiveCompleted = Math.max(maxConsecutiveCompleted, tempConsecutiveCompleted);
-      } else {
-        if (currentConsecutiveCompleted > 0) {
-          // 如果之前有連續完成，重置完成計數
+        } else if (shouldCountAsMissed) {
+          currentConsecutiveMissed = 1;
           currentConsecutiveCompleted = 0;
+          tempConsecutiveCompleted = 0;
         }
-        currentConsecutiveMissed++;
-        tempConsecutiveCompleted = 0;
+        // 如果是今天且未完成，暫不計算連續狀態
+      } else {
+        // 檢查是否維持相同的連續狀態
+        if (wasCompleted && currentConsecutiveCompleted > 0) {
+          // 繼續完成連勝
+          currentConsecutiveCompleted++;
+          tempConsecutiveCompleted++;
+        } else if (shouldCountAsMissed && currentConsecutiveMissed > 0) {
+          // 繼續錯過連勝
+          currentConsecutiveMissed++;
+        } else if (wasCompleted && currentConsecutiveMissed > 0) {
+          // 錯過連勝被打破，重新開始完成連勝
+          currentConsecutiveCompleted = 1;
+          currentConsecutiveMissed = 0;
+          tempConsecutiveCompleted = 1;
+        } else if (shouldCountAsMissed && currentConsecutiveCompleted > 0) {
+          // 完成連勝被打破，重新開始錯過連勝
+          currentConsecutiveMissed = 1;
+          currentConsecutiveCompleted = 0;
+          tempConsecutiveCompleted = 0;
+        }
+        // 如果是今天且未完成，不影響當前連續狀態
       }
+      
+      // 記錄最大連續完成次數
+      maxConsecutiveCompleted = Math.max(maxConsecutiveCompleted, tempConsecutiveCompleted);
     }
 
     return {
@@ -282,11 +316,22 @@ export class DailyTaskService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // 獲取任務的有效開始日期（創建日期或目標日期中較晚的一個）
+    const taskCreatedDate = new Date(task.created_at);
+    taskCreatedDate.setHours(0, 0, 0, 0);
+    
+    const targetDate = new Date(task.target_date);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    // 使用目標日期和創建日期中較晚的作為開始日期
+    const effectiveStartDate = targetDate > taskCreatedDate ? targetDate : taskCreatedDate;
+
     for (let i = days - 1; i >= 0; i--) {
       const checkDate = new Date(today);
       checkDate.setDate(today.getDate() - i);
 
-      if (this.shouldTaskAppearOnDate(task, checkDate)) {
+      // 只計算任務有效開始日期之後的日期
+      if (checkDate >= effectiveStartDate && this.shouldTaskAppearOnDate(task, checkDate)) {
         dates.push(checkDate.toISOString().split('T')[0]);
       }
     }

@@ -20,7 +20,12 @@ export const useTaskStore = defineStore('task', () => {
     return tasks.value.filter(task => !task.is_completed)
   })
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (force = false) => {
+    // 避免重複請求（除非強制刷新）
+    if (loading.value && !force) {
+      return
+    }
+    
     loading.value = true
     error.value = null
     
@@ -52,7 +57,7 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
-    loading.value = true
+    // 不設置 loading 狀態，避免影響 fetchTasks 的防重複邏輯
     error.value = null
     
     try {
@@ -65,8 +70,6 @@ export const useTaskStore = defineStore('task', () => {
     } catch (err: any) {
       error.value = err.response?.data?.error || 'Failed to update task'
       throw err
-    } finally {
-      loading.value = false
     }
   }
 

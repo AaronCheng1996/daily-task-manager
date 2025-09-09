@@ -19,8 +19,33 @@
       </button>
     </div>
 
-    <!-- Filter Tabs -->
-    <div class="mb-8">
+    <!-- Search and Filter Section -->
+    <div class="mb-8 space-y-4">
+      <!-- Search Bar -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/60 shadow-soft">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            v-model="searchKeyword"
+            type="text"
+            placeholder="Search tasks by title or description..."
+            class="w-full pl-10 pr-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+          />
+          <button
+            v-if="searchKeyword"
+            @click="searchKeyword = ''"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
       <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-2 border border-white/60 shadow-soft">
         <nav class="flex flex-wrap gap-2">
           <button
@@ -126,7 +151,15 @@
       </div>
       <h3 class="text-2xl font-bold text-gray-900 mb-3">No tasks found</h3>
       <p class="text-gray-500 mb-8 max-w-md mx-auto">
-        {{ activeFilter === 'all' ? "You haven't created any tasks yet. Get started by creating your first task!" : `No ${filters.find(f => f.key === activeFilter)?.label.toLowerCase()} tasks found. Try a different filter or create a new task.` }}
+        <span v-if="searchKeyword.trim()">
+          No tasks match your search "{{ searchKeyword }}". Try adjusting your search terms or create a new task.
+        </span>
+        <span v-else-if="activeFilter === 'all'">
+          You haven't created any tasks yet. Get started by creating your first task!
+        </span>
+        <span v-else>
+          No {{ filters.find(f => f.key === activeFilter)?.label.toLowerCase() }} tasks found. Try a different filter or create a new task.
+        </span>
       </p>
       <button
         @click="showCreateTask = true"
@@ -145,6 +178,14 @@
       @close="showCreateTask = false"
       @created="handleTaskCreated"
     />
+
+    <!-- Edit Task Modal -->
+    <EditTaskModal
+      v-if="showEditTask && editingTask"
+      :task="editingTask"
+      @close="showEditTask = false; editingTask = null"
+      @updated="handleTaskUpdated"
+    />
   </div>
 </template>
 
@@ -158,10 +199,14 @@ import HabitTaskItem from '@/components/HabitTaskItem.vue'
 import DailyTaskItem from '@/components/DailyTaskItem.vue'
 import LongTermTaskItem from '@/components/LongTermTaskItem.vue'
 import CreateTaskModal from '@/components/CreateTaskModal.vue'
+import EditTaskModal from '@/components/EditTaskModal.vue'
 
 const taskStore = useTaskStore()
 const showCreateTask = ref(false)
+const showEditTask = ref(false)
+const editingTask = ref<Task | null>(null)
 const activeFilter = ref('all')
+const searchKeyword = ref('')
 
 const filters = computed(() => [
   {
@@ -202,22 +247,43 @@ const filters = computed(() => [
 ])
 
 const filteredTasks = computed(() => {
+  let tasks: Task[] = []
+  
+  // First, filter by type/status
   switch (activeFilter.value) {
     case 'todo':
-      return taskStore.tasksByType(TaskType.TODO)
+      tasks = taskStore.tasksByType(TaskType.TODO)
+      break
     case 'habit':
-      return taskStore.tasksByType(TaskType.HABIT)
+      tasks = taskStore.tasksByType(TaskType.HABIT)
+      break
     case 'daily':
-      return taskStore.tasksByType(TaskType.DAILY_TASK)
+      tasks = taskStore.tasksByType(TaskType.DAILY_TASK)
+      break
     case 'longterm':
-      return taskStore.tasksByType(TaskType.LONG_TERM)
+      tasks = taskStore.tasksByType(TaskType.LONG_TERM)
+      break
     case 'completed':
-      return taskStore.completedTasks
+      tasks = taskStore.completedTasks
+      break
     case 'incomplete':
-      return taskStore.incompleteTasks
+      tasks = taskStore.incompleteTasks
+      break
     default:
-      return taskStore.tasks
+      tasks = taskStore.tasks
+      break
   }
+
+  // Then, apply search keyword filter if exists
+  if (searchKeyword.value.trim()) {
+    const keyword = searchKeyword.value.trim().toLowerCase()
+    tasks = tasks.filter(task => 
+      task.title.toLowerCase().includes(keyword) ||
+      (task.description && task.description.toLowerCase().includes(keyword))
+    )
+  }
+
+  return tasks
 })
 
 const handleToggleTask = async (taskId: string) => {
@@ -229,8 +295,8 @@ const handleToggleTask = async (taskId: string) => {
 }
 
 const handleEditTask = (task: any) => {
-  // TODO: Implement edit functionality
-  console.log('Edit task:', task)
+  editingTask.value = task
+  showEditTask.value = true
 }
 
 const handleDeleteTask = async (taskId: string) => {
@@ -249,8 +315,17 @@ const handleTaskCreated = () => {
 }
 
 const handleTaskUpdated = () => {
-  // 重新獲取任務列表以更新數據
+  showEditTask.value = false
+  editingTask.value = null
+  // Re-fetch tasks to ensure we have the latest data
   taskStore.fetchTasks()
+}
+
+const handleTaskRefresh = () => {
+  // 重新獲取任務列表以更新數據（節流處理，避免頻繁調用）
+  if (!taskStore.loading) {
+    taskStore.fetchTasks()
+  }
 }
 
 onMounted(() => {
