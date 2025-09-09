@@ -78,7 +78,7 @@
         <div class="flex justify-between text-sm">
           <span class="text-gray-600">Progress</span>
           <span class="font-medium" :class="progressClass">
-            {{ statistics.progress }}%
+            {{ formatProgress(statistics.progress) }}%
           </span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2">
@@ -344,7 +344,7 @@ const createMilestone = async () => {
       statistics.value.totalMilestones = milestones.value.length
       statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
       statistics.value.progress = statistics.value.totalMilestones > 0 
-        ? (statistics.value.completedMilestones / statistics.value.totalMilestones) * 100 
+        ? Number(((statistics.value.completedMilestones / statistics.value.totalMilestones) * 100).toFixed(2))
         : 0
     }
     
@@ -383,7 +383,7 @@ const toggleMilestone = async (milestoneId: string) => {
     if (statistics.value) {
       statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
       statistics.value.progress = statistics.value.totalMilestones > 0 
-        ? (statistics.value.completedMilestones / statistics.value.totalMilestones) * 100 
+        ? Number(((statistics.value.completedMilestones / statistics.value.totalMilestones) * 100).toFixed(2))
         : 0
     }
     
@@ -416,7 +416,7 @@ const deleteMilestone = async (milestoneId: string) => {
       statistics.value.totalMilestones = milestones.value.length
       statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
       statistics.value.progress = statistics.value.totalMilestones > 0 
-        ? (statistics.value.completedMilestones / statistics.value.totalMilestones) * 100 
+        ? Number(((statistics.value.completedMilestones / statistics.value.totalMilestones) * 100).toFixed(2))
         : 0
     }
     
@@ -487,6 +487,10 @@ const formatDate = (dateStr: string): string => {
   } catch {
     return dateStr
   }
+}
+
+const formatProgress = (progress: number): string => {
+  return progress.toFixed(2)
 }
 
 // 組件載入時獲取數據

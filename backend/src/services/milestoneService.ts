@@ -111,7 +111,7 @@ export class MilestoneService {
 
       const updateResult = await client.query(
         `UPDATE milestones 
-         SET ${setClause.join(', ')}, updated_at = NOW()
+         SET ${setClause.join(', ')}
          WHERE id = $${paramIndex}
          RETURNING *`,
         values
@@ -367,7 +367,7 @@ export class MilestoneService {
     return {
       totalMilestones,
       completedMilestones,
-      progress: Math.round(progress * 100) / 100,
+      progress: Number(progress.toFixed(2)),
       isOverdue,
       daysToTarget,
       milestonesByStatus
