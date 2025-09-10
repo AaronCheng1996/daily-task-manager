@@ -92,3 +92,11 @@ JWT_SECRET=your-secret-key
 ```
 VITE_API_URL=http://localhost:3001/api
 ```
+
+### Todo
+- Draging Tasks and Milestones
+- remove Daily Task's Target Date, Daily Task don't need it
+- Daily Task Recurrence Type's Weekly and Monthly can choose which day. For examle, go to church on every Sunday, clean bedroom on every first Saturday or eat something healthy on every Month's 5th.
+- Change Task's background color and disable Done button if the Daily Task is not triggered Today. also make two toggle button that filter triggered and Completed Task on the page instead of using different Pages
+- Reward point system
+- auto database init (for existing database)
