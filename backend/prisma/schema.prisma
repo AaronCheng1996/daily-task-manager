@@ -1,0 +1,160 @@
+// Daily Task Manager Prisma Schema
+// This schema defines the database structure for the Daily Task Manager application
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum TaskType {
+  HABIT
+  DAILY_TASK
+  TODO
+  LONG_TERM
+}
+
+enum HabitType {
+  GOOD
+  BAD
+}
+
+enum RecurrenceType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  EVERY_X_DAYS
+  EVERY_X_WEEKS
+  EVERY_X_MONTHS
+  WEEKLY_ON_DAYS
+  MONTHLY_ON_DAYS
+  WEEK_OF_MONTH_ON_DAYS
+}
+
+enum TimeRangeType {
+  DAYS
+  WEEKS
+  MONTHS
+}
+
+// Models
+model User {
+  id                String   @id @db.VarChar(26)
+  username          String   @unique @db.VarChar(50)
+  email             String   @unique @db.VarChar(255)
+  password_hash     String   @db.VarChar(255)
+  preferred_language String  @default("en") @db.VarChar(10)
+  points            Int      @default(0)
+  timezone          String   @default("UTC") @db.VarChar(50)
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  tasks             Task[]
+
+  @@map("users")
+}
+
+model Task {
+  id                String   @id @db.VarChar(26)
+  user_id           String   @db.VarChar(26)
+  title             String   @db.VarChar(255)
+  description       String?
+  task_type         TaskType
+  importance        Int      @default(1) @db.SmallInt
+  is_completed      Boolean  @default(false)
+  order_index       Int
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // HABIT specific fields
+  habit_type        HabitType?
+  threshold_count   Int?
+  time_range_value  Int?
+  time_range_type   TimeRangeType?
+  last_completion_time DateTime? @db.Timestamptz(6)
+
+  // DAILY_TASK specific fields
+  started_at                    DateTime? @db.Timestamptz(6)
+  is_recurring                  Boolean   @default(true)
+  recurrence_type               RecurrenceType?
+  recurrence_interval           Int?
+  recurrence_days_of_week       Int[]     @db.SmallInt
+  recurrence_days_of_month      Int[]     @db.SmallInt
+  recurrence_weeks_of_month     Int[]     @db.SmallInt
+  current_consecutive_completed Int       @default(0)
+  current_consecutive_missed    Int       @default(0)
+  max_consecutive_completed     Int       @default(0)
+  last_reset_at                 DateTime? @db.Timestamptz(6)
+
+  // TODO specific fields
+  due_at      DateTime? @db.Timestamptz(6)
+  is_overdue  Boolean   @default(false)
+
+  // LONG_TERM specific fields
+  progress                Decimal @default(0.00) @db.Decimal(3, 2)
+  show_progress           Boolean @default(true)
+  target_completion_at    DateTime? @db.Timestamptz(6)
+
+  // Relations
+  user                   User                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  completion_history     CompletionHistory[]
+  habit_completions      HabitCompletion[]
+  milestones             Milestone[]
+
+  @@index([user_id], map: "idx_tasks_user_id")
+  @@index([task_type], map: "idx_tasks_type")
+  @@index([due_at], map: "idx_tasks_due_at")
+  @@map("tasks")
+}
+
+model CompletionHistory {
+  id           String   @id @db.VarChar(26)
+  task_id      String   @db.VarChar(26)
+  completion_at DateTime @db.Timestamptz(6)
+  is_completed Boolean
+  recorded_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id], map: "idx_completion_history_task_id")
+  @@index([completion_at], map: "idx_completion_history_date")
+  @@map("completion_history")
+}
+
+model HabitCompletion {
+  id          String   @id @db.VarChar(26)
+  task_id     String   @db.VarChar(26)
+  completed_at DateTime @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id], map: "idx_habit_completions_task_id")
+  @@index([completed_at], map: "idx_habit_completions_date")
+  @@map("habit_completions")
+}
+
+model Milestone {
+  id           String    @id @db.VarChar(26)
+  task_id      String    @db.VarChar(26)
+  title        String    @db.VarChar(255)
+  description  String?
+  is_completed Boolean   @default(false)
+  completion_at DateTime? @db.Timestamptz(6)
+  order_index  Int
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@index([task_id], map: "idx_milestones_task_id")
+  @@map("milestones")
+}

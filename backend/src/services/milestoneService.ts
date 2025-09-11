@@ -1,6 +1,6 @@
 import { ulid } from 'ulid';
-import { pool } from '../config/postgre';
-import { LongTermTask, Milestone } from '../types/task';
+import { prisma } from '../utils/prisma';
+import { LongTermTask, Milestone } from '../models/task';
 import moment from 'moment';
 
 export class MilestoneService {

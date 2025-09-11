@@ -1,6 +1,6 @@
 import { ulid } from 'ulid';
-import { pool } from '../config/postgre';
-import { DailyTask, RecurrenceType } from '../types/task';
+import { prisma } from '../utils/prisma';
+import { DailyTask, RecurrenceType } from '../models/task';
 import moment from 'moment';
 
 export class DailyTaskService {

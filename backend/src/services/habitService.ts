@@ -1,6 +1,6 @@
 import { ulid } from 'ulid';
-import { pool } from '../config/postgre';
-import { HabitTask, HabitType, TimeRangeType } from '../types/task';
+import { prisma } from '../utils/prisma';
+import { HabitTask, HabitType, TimeRangeType } from '../models/task';
 
 export class HabitService {
   /**

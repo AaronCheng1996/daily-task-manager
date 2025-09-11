@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/postgre';
-import { User } from '../types/task';
+import { prisma } from './prisma';
+import { User } from '../models/user';
 import Env from '../config/env';
 
 export interface AuthRequest extends Request {
@@ -10,7 +10,7 @@ export interface AuthRequest extends Request {
 
 export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
     res.status(401).json({ error: 'Access token required' });
@@ -21,15 +21,16 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     const jwtSecret = Env.JWT_SECRET;
     const decoded = jwt.verify(token, jwtSecret) as { userId: string };
     
-    // Get user from database
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId }
+    });
     
-    if (result.rows.length === 0) {
+    if (!user) {
       res.status(403).json({ error: 'Invalid token' });
       return;
     }
 
-    req.user = result.rows[0];
+    req.user = user;
     next();
   } catch (error) {
     res.status(403).json({ error: 'Invalid token' });

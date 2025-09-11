@@ -6,12 +6,11 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import moment from 'moment';
 
-import { initPostgre } from './config/postgre';
+import { initDatabase } from './config/database';
 import { initRedis } from './config/redis';
-import authRoutes from './routes/auth';
-import taskRoutes from './routes/tasks';
+import router from './route';
 import Env from './config/env';
-import logger from './lib/log/logger';
+import logger from './utils/logger';
 
 dotenv.config();
 
@@ -40,8 +39,7 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/tasks', taskRoutes);
+app.use('/api', router);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error(err.stack);
@@ -56,7 +54,7 @@ app.use('*', (_req, res) => {
 
 const startServer = async () => {
   try {
-    await initPostgre();
+    await initDatabase();
     await initRedis();
     
     app.listen(PORT, () => {

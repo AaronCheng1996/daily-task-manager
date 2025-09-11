@@ -1,5 +1,5 @@
-import { pool } from '../config/postgre';
-import { TodoTask } from '../types/task';
+import { prisma } from '../utils/prisma';
+import { TodoTask } from '../models/task';
 import moment from 'moment';
 
 export class TodoService {
@@ -10,30 +10,39 @@ export class TodoService {
     updatedCount: number;
     overdueTaskIds: string[];
   }> {
-    const client = await pool.connect();
+    const result = await prisma.task.updateMany({
+      where: {
+        task_type: 'TODO',
+        due_at: {
+          lt: new Date()
+        },
+        is_completed: false,
+        is_overdue: false
+      },
+      data: {
+        is_overdue: true
+      }
+    });
 
-    try {
-      const updateResult = await client.query(
-        `UPDATE tasks 
-         SET is_overdue = true, updated_at = NOW() 
-         WHERE task_type = 'TODO' 
-           AND due_at < NOW() 
-           AND is_completed = false 
-           AND is_overdue = false
-         RETURNING id`,
-      );
+    // Get the IDs of updated tasks
+    const overdueTasks = await prisma.task.findMany({
+      where: {
+        task_type: 'TODO',
+        due_at: {
+          lt: new Date()
+        },
+        is_completed: false,
+        is_overdue: true
+      },
+      select: {
+        id: true
+      }
+    });
 
-      const updatedCount = updateResult.rowCount || 0;
-      const overdueTaskIds = updateResult.rows.map(row => row.id);
-
-      return {
-        updatedCount,
-        overdueTaskIds
-      };
-
-    } finally {
-      client.release();
-    }
+    return {
+      updatedCount: result.count,
+      overdueTaskIds: overdueTasks.map(task => task.id)
+    };
   }
 
   /**

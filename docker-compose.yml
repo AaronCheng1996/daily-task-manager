@@ -36,7 +36,7 @@ services:
   backend:
     build: 
       context: ./backend
-      target: production
+      target: development
     ports:
       - "3001:3001"
     environment:
@@ -52,7 +52,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: npm run dev
+    command: sh -c "npx prisma migrate deploy && npm run dev"
 
   # Frontend
   frontend:

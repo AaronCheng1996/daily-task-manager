@@ -12,6 +12,9 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 # Copy source code
 COPY . .
 
+# Generate Prisma Client
+RUN npx prisma generate
+
 # Build TypeScript
 RUN npm run build
 
@@ -28,6 +31,9 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Copy source code
 COPY . .
+
+# Generate Prisma Client
+RUN npx prisma generate
 
 # Expose port
 EXPOSE 3001

@@ -1,7 +1,7 @@
 import { createClient } from 'redis';
 import dotenv from 'dotenv';
 import Env from './env';
-import logger from '../lib/log/logger';
+import logger from '../utils/logger';
 
 dotenv.config();
 
