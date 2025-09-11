@@ -4,27 +4,26 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import moment from 'moment';
 
-import { initDatabase } from './config/database';
+import { initPostgre } from './config/postgre';
+import { initRedis } from './config/redis';
 import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Rate limiting - more lenient in development
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // 1000 requests in dev, 100 in production
+  windowMs: moment.duration(1, 'minutes').asMilliseconds(),
+  max: 100,
   message: { error: 'Too many requests from this IP, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Middleware
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : 'http://localhost:3000',
@@ -35,16 +34,13 @@ app.use(limiter);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Error handling middleware
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ 
@@ -52,15 +48,14 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   });
 });
 
-// 404 handler
 app.use('*', (_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server
 const startServer = async () => {
   try {
-    await initDatabase();
+    await initPostgre();
+    await initRedis();
     
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

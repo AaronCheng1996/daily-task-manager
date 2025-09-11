@@ -1,4 +1,4 @@
-import { pool } from '../config/database';
+import { pool } from '../config/postgre';
 import { HabitTask, HabitType, TimeRangeType } from '../types';
 
 export class HabitService {

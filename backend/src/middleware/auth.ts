@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/database';
+import { pool } from '../config/postgre';
 import { User } from '../types';
 
 export interface AuthRequest extends Request {

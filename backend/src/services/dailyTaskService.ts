@@ -1,4 +1,4 @@
-import { pool } from '../config/database';
+import { pool } from '../config/postgre';
 import { DailyTask, RecurrenceType } from '../types';
 
 export class DailyTaskService {

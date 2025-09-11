@@ -1,4 +1,4 @@
-import { pool } from '../config/database';
+import { pool } from '../config/postgre';
 import { TodoTask } from '../types';
 
 export class TodoService {

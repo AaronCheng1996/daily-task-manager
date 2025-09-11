@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { pool } from '../config/database';
+import { pool } from '../config/postgre';
 import { User } from '../types';
 import { generateToken } from '../middleware/auth';
 
