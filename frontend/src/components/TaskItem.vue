@@ -119,14 +119,14 @@ defineEmits<{
 }>()
 
 const showDueDate = computed(() => {
-  return props.task.task_type === TaskType.TODO && (props.task as TodoTask).due_date
+  return props.task.task_type === TaskType.TODO && (props.task as TodoTask).due_at
 })
 
 const dueDateText = computed(() => {
   if (!showDueDate.value) return ''
   
   const todoTask = props.task as TodoTask
-  const dueDate = new Date(todoTask.due_date!)
+  const dueDate = new Date(todoTask.due_at!)
   const now = new Date()
   
   // 設置時間為當天開始，避免時區問題
@@ -161,7 +161,7 @@ const dueDateClass = computed(() => {
   if (!showDueDate.value) return ''
   
   const todoTask = props.task as TodoTask
-  const dueDate = new Date(todoTask.due_date!)
+  const dueDate = new Date(todoTask.due_at!)
   const now = new Date()
   
   // 設置時間為當天開始
@@ -246,7 +246,7 @@ const dueDateBadgeClass = computed(() => {
   if (!showDueDate.value) return ''
   
   const todoTask = props.task as TodoTask
-  const dueDate = new Date(todoTask.due_date!)
+  const dueDate = new Date(todoTask.due_at!)
   const now = new Date()
   
   now.setHours(0, 0, 0, 0)

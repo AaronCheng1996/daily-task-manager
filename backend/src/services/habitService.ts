@@ -1,3 +1,4 @@
+import { ulid } from 'ulid';
 import { pool } from '../config/postgre';
 import { HabitTask, HabitType, TimeRangeType } from '../types/task';
 
@@ -29,9 +30,10 @@ export class HabitService {
       const habitTask = taskResult.rows[0] as HabitTask;
 
       // 記錄完成
+      const completionId = ulid();
       await client.query(
-        'INSERT INTO habit_completions (task_id) VALUES ($1)',
-        [taskId]
+        'INSERT INTO habit_completions (id, task_id) VALUES ($1, $2)',
+        [completionId, taskId]
       );
 
       // 更新最後完成時間
@@ -244,17 +246,17 @@ export class HabitService {
 
       // 獲取最近30天的完成歷史 (按日統計)
       const historyResult = await client.query(
-        `SELECT DATE(completed_at) as completion_date, COUNT(*) as count
+        `SELECT DATE(completed_at) as completion_at, COUNT(*) as count
          FROM habit_completions 
          WHERE task_id = $1 
            AND completed_at >= NOW() - INTERVAL '30 days'
          GROUP BY DATE(completed_at)
-         ORDER BY completion_date DESC`,
+         ORDER BY completion_at DESC`,
         [taskId]
       );
 
       const completionHistory = historyResult.rows.map(row => ({
-        date: new Date(row.completion_date),
+        date: new Date(row.completion_at),
         count: parseInt(row.count, 10)
       }));
 

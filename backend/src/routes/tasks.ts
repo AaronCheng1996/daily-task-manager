@@ -28,19 +28,20 @@ const createTaskSchema = z.object({
   time_range_type: z.nativeEnum(TimeRangeType).optional(),
   
   // DAILY_TASK fields
-  target_date: z.string().datetime().optional(),
+  started_at: z.string().datetime().optional(),
   is_recurring: z.boolean().default(true),
   recurrence_type: z.nativeEnum(RecurrenceType).optional(),
   recurrence_interval: z.number().int().positive().optional(),
-  recurrence_day_of_week: z.number().int().min(0).max(6).optional(),
-  recurrence_day_of_month: z.number().int().min(-1).max(31).optional(),
+  recurrence_days_of_week: z.array(z.number().int().min(0).max(6)).optional(),
+  recurrence_days_of_month: z.array(z.number().int().min(-1).max(31)).optional(),
+  recurrence_weeks_of_month: z.array(z.number().int().min(0).max(4)).optional(),
   
   // TODO fields
-  due_date: z.string().datetime().optional(),
+  due_at: z.string().datetime().optional(),
   
   // LONG_TERM fields
   show_progress: z.boolean().default(true),
-  target_completion_date: z.string().datetime().optional()
+  target_completion_at: z.string().datetime().optional()
 });
 
 // Get all tasks for user
@@ -451,11 +452,11 @@ router.get('/upcoming', async (req: AuthRequest, res) => {
 router.patch('/:id/due-date', async (req: AuthRequest, res) => {
   try {
     const dueDateSchema = z.object({
-      due_date: z.string().datetime().nullable()
+      due_at: z.string().datetime().nullable()
     });
 
-    const { due_date } = dueDateSchema.parse(req.body);
-    const dueDate = due_date ? new Date(due_date) : null;
+    const { due_at } = dueDateSchema.parse(req.body);
+    const dueDate = due_at ? new Date(due_at) : null;
     
     const task = await TodoService.updateTaskDueDate(req.params.id, req.user!.id, dueDate);
     

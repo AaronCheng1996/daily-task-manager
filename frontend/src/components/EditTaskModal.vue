@@ -73,7 +73,7 @@
               {{ $t('tasks.dueDate') }} (Optional)
             </label>
             <input
-              v-model="form.due_date"
+              v-model="form.due_at"
               type="datetime-local"
               class="form-input"
             />
@@ -134,7 +134,7 @@
                 Target Date
               </label>
               <input
-                v-model="form.target_date"
+                v-model="form.started_at"
                 type="date"
                 class="form-input"
               />
@@ -194,7 +194,7 @@
                 Target Completion Date (Optional)
               </label>
               <input
-                v-model="form.target_completion_date"
+                v-model="form.target_completion_at"
                 type="date"
                 class="form-input"
               />
@@ -248,20 +248,20 @@ const form = reactive({
   task_type: TaskType.TODO,
   importance: 1,
   // TODO fields
-  due_date: '',
+  due_at: '',
   // HABIT fields
   habit_type: 'GOOD',
   threshold_count: 1,
   time_range_value: 7,
   time_range_type: 'DAYS',
   // DAILY_TASK fields
-  target_date: '',
+  started_at: '',
   is_recurring: true,
   recurrence_type: 'DAILY',
   recurrence_interval: 1,
   // LONG_TERM fields
   show_progress: true,
-  target_completion_date: ''
+  target_completion_at: ''
 })
 
 const emit = defineEmits<{
@@ -279,15 +279,15 @@ const populateForm = () => {
   // Populate type-specific fields
   if (props.task.task_type === TaskType.TODO) {
     const todoTask = props.task as TodoTask
-    if (todoTask.due_date) {
-      const date = new Date(todoTask.due_date)
+    if (todoTask.due_at) {
+      const date = new Date(todoTask.due_at)
       // Format for datetime-local input
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')
       const hours = String(date.getHours()).padStart(2, '0')
       const minutes = String(date.getMinutes()).padStart(2, '0')
-      form.due_date = `${year}-${month}-${day}T${hours}:${minutes}`
+      form.due_at = `${year}-${month}-${day}T${hours}:${minutes}`
     }
   } else if (props.task.task_type === TaskType.HABIT) {
     const habitTask = props.task as HabitTask
@@ -297,12 +297,12 @@ const populateForm = () => {
     form.time_range_type = habitTask.time_range_type || 'DAYS'
   } else if (props.task.task_type === TaskType.DAILY_TASK) {
     const dailyTask = props.task as DailyTask
-    if (dailyTask.target_date) {
-      const date = new Date(dailyTask.target_date)
+    if (dailyTask.started_at) {
+      const date = new Date(dailyTask.started_at)
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')
-      form.target_date = `${year}-${month}-${day}`
+      form.started_at = `${year}-${month}-${day}`
     }
     form.is_recurring = dailyTask.is_recurring ?? true
     form.recurrence_type = dailyTask.recurrence_type || 'DAILY'
@@ -310,21 +310,21 @@ const populateForm = () => {
   } else if (props.task.task_type === TaskType.LONG_TERM) {
     const longTermTask = props.task as LongTermTask
     form.show_progress = longTermTask.show_progress ?? true
-    if (longTermTask.target_completion_date) {
+    if (longTermTask.target_completion_at) {
       try {
-        const date = new Date(longTermTask.target_completion_date)
+        const date = new Date(longTermTask.target_completion_at)
         if (!isNaN(date.getTime())) {
           const year = date.getFullYear()
           const month = String(date.getMonth() + 1).padStart(2, '0')
           const day = String(date.getDate()).padStart(2, '0')
-          form.target_completion_date = `${year}-${month}-${day}`
+          form.target_completion_at = `${year}-${month}-${day}`
         }
       } catch (e) {
-        console.warn('Invalid target_completion_date:', longTermTask.target_completion_date, e)
-        form.target_completion_date = ''
+        console.warn('Invalid target_completion_at:', longTermTask.target_completion_at, e)
+        form.target_completion_at = ''
       }
     } else {
-      form.target_completion_date = ''
+      form.target_completion_at = ''
     }
   }
 }
@@ -342,10 +342,10 @@ const handleSubmit = async () => {
 
     // Add type-specific fields
     if (form.task_type === TaskType.TODO) {
-      if (form.due_date) {
-        taskData.due_date = new Date(form.due_date).toISOString()
+      if (form.due_at) {
+        taskData.due_at = new Date(form.due_at).toISOString()
       } else {
-        taskData.due_date = null
+        taskData.due_at = null
       }
     }
 
@@ -357,8 +357,8 @@ const handleSubmit = async () => {
     }
 
     if (form.task_type === TaskType.DAILY_TASK) {
-      if (form.target_date) {
-        taskData.target_date = new Date(form.target_date).toISOString()
+      if (form.started_at) {
+        taskData.started_at = new Date(form.started_at).toISOString()
       }
       taskData.is_recurring = form.is_recurring
       taskData.recurrence_type = form.recurrence_type
@@ -367,15 +367,15 @@ const handleSubmit = async () => {
 
     if (form.task_type === TaskType.LONG_TERM) {
       taskData.show_progress = form.show_progress
-      if (form.target_completion_date && form.target_completion_date.trim()) {
+      if (form.target_completion_at && form.target_completion_at.trim()) {
         try {
-          taskData.target_completion_date = new Date(form.target_completion_date).toISOString()
+          taskData.target_completion_at = new Date(form.target_completion_at).toISOString()
         } catch (e) {
-          console.error('Invalid date format:', form.target_completion_date, e)
-          taskData.target_completion_date = null
+          console.error('Invalid date format:', form.target_completion_at, e)
+          taskData.target_completion_at = null
         }
       } else {
-        taskData.target_completion_date = null
+        taskData.target_completion_at = null
       }
     }
 

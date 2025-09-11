@@ -81,7 +81,6 @@ Create `.env` files for each service:
 
 ### Backend (.env)
 ```
-NODE_ENV=development
 PORT=3001
 DATABASE_URL=postgresql://taskuser:taskpass@localhost:5432/daily_tasks
 REDIS_URL=redis://localhost:6379

@@ -1,3 +1,4 @@
+import { ulid } from 'ulid';
 import { pool } from '../config/postgre';
 import { Task, TaskType } from '../types/task';
 import { HabitService } from './habitService';
@@ -6,9 +7,7 @@ import { TodoService } from './todoService';
 
 export class TaskService {
   private static generateTaskId(): string {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    return `${timestamp}_${random}`;
+    return ulid();
   }
 
   static async getUserTasks(userId: string): Promise<Task[]> {
@@ -34,11 +33,11 @@ export class TaskService {
     
     // Base task fields
     const baseFields = [
-      'id', 'user_id', 'title', 'description', 'task_type', 'importance'
+      'id', 'user_id', 'title', 'description', 'task_type', 'importance', 'order_index'
     ];
     const baseValues = [
       taskId, userId, taskData.title, taskData.description || null, 
-      taskData.task_type, taskData.importance || 1
+      taskData.task_type, taskData.importance || 1, taskData.order_index || 0
     ];
     
     // Dynamic fields based on task type
@@ -58,29 +57,30 @@ export class TaskService {
         
       case TaskType.DAILY_TASK:
         additionalFields.push(
-          'target_date', 'is_recurring', 'recurrence_type', 'recurrence_interval',
-          'recurrence_day_of_week', 'recurrence_day_of_month'
+          'started_at', 'is_recurring', 'recurrence_type', 'recurrence_interval',
+          'recurrence_days_of_week', 'recurrence_days_of_month', 'recurrence_weeks_of_month'
         );
         additionalValues.push(
-          taskData.target_date ? new Date(taskData.target_date) : new Date(),
+          taskData.started_at ? new Date(taskData.started_at) : new Date(),
           taskData.is_recurring !== undefined ? taskData.is_recurring : true,
           taskData.recurrence_type,
           taskData.recurrence_interval,
-          taskData.recurrence_day_of_week,
-          taskData.recurrence_day_of_month
+          taskData.recurrence_days_of_week ? JSON.stringify(taskData.recurrence_days_of_week) : null,
+          taskData.recurrence_days_of_month ? JSON.stringify(taskData.recurrence_days_of_month) : null,
+          taskData.recurrence_weeks_of_month ? JSON.stringify(taskData.recurrence_weeks_of_month) : null
         );
         break;
         
       case TaskType.TODO:
-        additionalFields.push('due_date');
-        additionalValues.push(taskData.due_date ? new Date(taskData.due_date) : null);
+        additionalFields.push('due_at');
+        additionalValues.push(taskData.due_at ? new Date(taskData.due_at) : null);
         break;
         
       case TaskType.LONG_TERM:
-        additionalFields.push('show_progress', 'target_completion_date');
+        additionalFields.push('show_progress', 'target_completion_at');
         additionalValues.push(
           taskData.show_progress !== undefined ? taskData.show_progress : true,
-          taskData.target_completion_date ? new Date(taskData.target_completion_date) : null
+          taskData.target_completion_at ? new Date(taskData.target_completion_at) : null
         );
         break;
     }
@@ -115,11 +115,17 @@ export class TaskService {
     let paramIndex = 1;
     
     for (const [key, value] of Object.entries(validUpdates)) {
-      // Handle date fields
-      if (key.includes('date') || key.includes('_date')) {
+      // Handle date fields (including new _at fields)
+      if (key.includes('date') || key.includes('_date') || key.includes('_at')) {
         setClause.push(`${key} = $${paramIndex}`);
         values.push(value ? new Date(value as string) : null);
-      } else {
+      } 
+      // Handle array fields for recurrence
+      else if (key.includes('recurrence_days_of_week') || key.includes('recurrence_days_of_month') || key.includes('recurrence_weeks_of_month')) {
+        setClause.push(`${key} = $${paramIndex}`);
+        values.push(value ? JSON.stringify(value) : null);
+      } 
+      else {
         setClause.push(`${key} = $${paramIndex}`);
         values.push(value);
       }

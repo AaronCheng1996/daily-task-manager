@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import { ulid } from 'ulid';
 import { pool } from '../config/postgre';
 import { User } from '../types/task';
 import { generateToken } from '../middleware/auth';
@@ -21,11 +22,12 @@ export class UserService {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     // Create user
+    const userId = ulid();
     const result = await pool.query(
-      `INSERT INTO users (username, email, password_hash) 
-       VALUES ($1, $2, $3) 
+      `INSERT INTO users (id, username, email, password_hash) 
+       VALUES ($1, $2, $3, $4) 
        RETURNING id, username, email, preferred_language, timezone, created_at, updated_at`,
-      [username, email, passwordHash]
+      [userId, username, email, passwordHash]
     );
 
     const user = result.rows[0];

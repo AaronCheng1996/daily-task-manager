@@ -72,7 +72,7 @@
               {{ $t('tasks.dueDate') }} (Optional)
             </label>
             <input
-              v-model="form.due_date"
+              v-model="form.due_at"
               type="datetime-local"
               class="form-input"
             />
@@ -85,7 +85,7 @@
                 Target Date
               </label>
               <input
-                v-model="form.target_date"
+                v-model="form.started_at"
                 type="date"
                 class="form-input"
                 required
@@ -146,7 +146,7 @@
                 Target Completion Date (Optional)
               </label>
               <input
-                v-model="form.target_completion_date"
+                v-model="form.target_completion_at"
                 type="date"
                 class="form-input"
               />
@@ -242,20 +242,20 @@ const form = reactive({
   task_type: TaskType.TODO,
   importance: 1,
   // TODO fields
-  due_date: '',
+  due_at: '',
   // HABIT fields
   habit_type: 'GOOD',
   threshold_count: 1,
   time_range_value: 7,
   time_range_type: 'DAYS',
   // DAILY_TASK fields
-  target_date: '',
+  started_at: '',
   is_recurring: true,
   recurrence_type: 'DAILY',
   recurrence_interval: 1,
   // LONG_TERM fields
   show_progress: true,
-  target_completion_date: ''
+  target_completion_at: ''
 })
 
 const emit = defineEmits<{
@@ -276,8 +276,8 @@ const handleSubmit = async () => {
     }
 
     // Add type-specific fields
-    if (form.task_type === TaskType.TODO && form.due_date) {
-      taskData.due_date = new Date(form.due_date).toISOString()
+    if (form.task_type === TaskType.TODO && form.due_at) {
+      taskData.due_at = new Date(form.due_at).toISOString()
     }
 
     if (form.task_type === TaskType.HABIT) {
@@ -288,7 +288,7 @@ const handleSubmit = async () => {
     }
 
     if (form.task_type === TaskType.DAILY_TASK) {
-      taskData.target_date = new Date(form.target_date).toISOString()
+      taskData.started_at = new Date(form.started_at).toISOString()
       taskData.is_recurring = form.is_recurring
       taskData.recurrence_type = form.recurrence_type
       taskData.recurrence_interval = form.recurrence_interval
@@ -296,8 +296,8 @@ const handleSubmit = async () => {
 
     if (form.task_type === TaskType.LONG_TERM) {
       taskData.show_progress = form.show_progress
-      if (form.target_completion_date) {
-        taskData.target_completion_date = new Date(form.target_completion_date).toISOString()
+      if (form.target_completion_at) {
+        taskData.target_completion_at = new Date(form.target_completion_at).toISOString()
       }
     }
 

@@ -25,8 +25,8 @@
 
           <!-- 目標日期和統計信息 -->
           <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-            <span v-if="task.target_completion_date">
-              Target: {{ formatDate(task.target_completion_date) }}
+            <span v-if="task.target_completion_at">
+              Target: {{ formatDate(task.target_completion_at) }}
               <span v-if="statistics?.daysToTarget !== undefined" 
                     :class="targetDateClass">
                 ({{ getTargetDateText() }})
@@ -197,8 +197,8 @@
                 <p v-if="milestone.description" class="text-xs text-gray-600 mt-1">
                   {{ milestone.description }}
                 </p>
-                <span v-if="milestone.completion_date" class="text-xs text-gray-400">
-                  Completed: {{ formatDate(milestone.completion_date) }}
+                <span v-if="milestone.completion_at" class="text-xs text-gray-400">
+                  Completed: {{ formatDate(milestone.completion_at) }}
                 </span>
               </div>
             </div>
@@ -373,9 +373,9 @@ const toggleMilestone = async (milestoneId: string) => {
     if (milestone) {
       milestone.is_completed = !milestone.is_completed
       if (milestone.is_completed) {
-        milestone.completion_date = new Date().toISOString()
+        milestone.completion_at = new Date().toISOString()
       } else {
-        milestone.completion_date = null
+        milestone.completion_at = null
       }
     }
     

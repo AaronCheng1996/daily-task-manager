@@ -19,7 +19,8 @@ export enum RecurrenceType {
   EVERY_X_WEEKS = 'EVERY_X_WEEKS',
   EVERY_X_MONTHS = 'EVERY_X_MONTHS',
   WEEKLY_ON_DAYS = 'WEEKLY_ON_DAYS',
-  MONTHLY_ON_DAYS = 'MONTHLY_ON_DAYS'
+  MONTHLY_ON_DAYS = 'MONTHLY_ON_DAYS',
+  WEEK_OF_MONTH_ON_DAYS = 'WEEK_OF_MONTH_ON_DAYS'
 }
 
 export enum TimeRangeType {
@@ -47,6 +48,7 @@ export interface TaskBase {
   task_type: TaskType;
   importance: number;
   is_completed: boolean;
+  order_index: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -62,21 +64,22 @@ export interface HabitTask extends TaskBase {
 
 export interface DailyTask extends TaskBase {
   task_type: TaskType.DAILY_TASK;
-  target_date: Date;
+  started_at: Date;
   is_recurring: boolean;
   recurrence_type: RecurrenceType;
   recurrence_interval?: number;
-  recurrence_day_of_week?: number;
-  recurrence_day_of_month?: number;
+  recurrence_days_of_week?: number[];
+  recurrence_days_of_month?: number[];
+  recurrence_weeks_of_month?: number[];
   current_consecutive_completed: number;
   current_consecutive_missed: number;
   max_consecutive_completed: number;
-  last_reset_date?: Date;
+  last_reset_at?: Date;
 }
 
 export interface TodoTask extends TaskBase {
   task_type: TaskType.TODO;
-  due_date?: Date;
+  due_at?: Date;
   is_overdue: boolean;
 }
 
@@ -84,19 +87,11 @@ export interface LongTermTask extends TaskBase {
   task_type: TaskType.LONG_TERM;
   progress: number;
   show_progress: boolean;
-  target_completion_date?: Date;
+  target_completion_at?: Date;
 }
 
 export type Task = HabitTask | DailyTask | TodoTask | LongTermTask;
 
-export interface TaskNote {
-  id: string;
-  task_id: string;
-  text: string;
-  is_completed: boolean;
-  order_index: number;
-  created_at: Date;
-}
 
 export interface Milestone {
   id: string;
@@ -104,7 +99,7 @@ export interface Milestone {
   title: string;
   description?: string;
   is_completed: boolean;
-  completion_date?: Date;
+  completion_at?: Date;
   order_index: number;
   created_at: Date;
 }
@@ -112,7 +107,7 @@ export interface Milestone {
 export interface CompletionHistory {
   id: string;
   task_id: string;
-  completion_date: Date;
+  completion_at: Date;
   is_completed: boolean;
   recorded_at: Date;
 }

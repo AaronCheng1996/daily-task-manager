@@ -28,7 +28,7 @@ const limiter = rateLimit({
 
 app.use(helmet());
 app.use(cors({
-  origin: Env.NODE_ENV === 'production' ? Env.FRONTEND_URL : 'http://localhost:3000',
+  origin: Env.FRONTEND_URL,
   credentials: true
 }));
 app.use(morgan('combined'));
@@ -46,7 +46,7 @@ app.use('/api/tasks', taskRoutes);
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error(err.stack);
   res.status(500).json({ 
-    error: Env.NODE_ENV === 'production' ? 'Internal server error' : err.message 
+    error: err.message //'Internal server error' change when release
   });
 });
 
@@ -61,7 +61,6 @@ const startServer = async () => {
     
     app.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
-      logger.info(`Environment: ${Env.NODE_ENV}`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

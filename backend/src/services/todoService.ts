@@ -1,9 +1,10 @@
 import { pool } from '../config/postgre';
 import { TodoTask } from '../types/task';
+import moment from 'moment';
 
 export class TodoService {
   /**
-   * 更新所有 TODO 任務的逾期狀態
+   * Update the overdue status of all TODO tasks
    */
   static async updateOverdueTasks(): Promise<{
     updatedCount: number;
@@ -12,12 +13,11 @@ export class TodoService {
     const client = await pool.connect();
 
     try {
-      // 將過期且未完成的任務標記為逾期
       const updateResult = await client.query(
         `UPDATE tasks 
          SET is_overdue = true, updated_at = NOW() 
          WHERE task_type = 'TODO' 
-           AND due_date < NOW() 
+           AND due_at < NOW() 
            AND is_completed = false 
            AND is_overdue = false
          RETURNING id`,
@@ -37,16 +37,15 @@ export class TodoService {
   }
 
   /**
-   * 獲取 TODO 任務統計
+   * Get the TODO task statistics
    */
   static async getTodoTaskStatistics(taskId: string, userId: string): Promise<{
     isOverdue: boolean;
     daysOverdue: number;
     daysUntilDue: number;
-    dueDateStatus: 'overdue' | 'today' | 'tomorrow' | 'this_week' | 'future' | 'no_due_date';
+    dueDateStatus: 'overdue' | 'today' | 'tomorrow' | 'this_week' | 'future' | 'no_due_at';
     dueDateText: string;
   }> {
-    // 驗證並獲取任務信息
     const taskResult = await pool.query(
       'SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
       [taskId, userId, 'TODO']
@@ -58,49 +57,41 @@ export class TodoService {
 
     const task = taskResult.rows[0] as TodoTask;
 
-    // 如果沒有截止日期
-    if (!task.due_date) {
+    if (!task.due_at) {
       return {
         isOverdue: false,
         daysOverdue: 0,
         daysUntilDue: 0,
-        dueDateStatus: 'no_due_date',
+        dueDateStatus: 'no_due_at',
         dueDateText: 'No due date'
       };
     }
 
     const now = new Date();
-    const dueDate = new Date(task.due_date);
+    const dueDate = new Date(task.due_at);
     
-    // 設置時間為當天開始，避免時區問題
     now.setHours(0, 0, 0, 0);
     dueDate.setHours(0, 0, 0, 0);
 
-    const diffTime = dueDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = moment(dueDate).diff(moment(now), 'days');
 
-    let dueDateStatus: 'overdue' | 'today' | 'tomorrow' | 'this_week' | 'future' | 'no_due_date';
+    let dueDateStatus: 'overdue' | 'today' | 'tomorrow' | 'this_week' | 'future' | 'no_due_at';
     let dueDateText: string;
 
     if (diffDays < 0) {
-      // 已逾期
       dueDateStatus = 'overdue';
       const overdueDays = Math.abs(diffDays);
       dueDateText = overdueDays === 1 ? '1 day overdue' : `${overdueDays} days overdue`;
     } else if (diffDays === 0) {
-      // 今天到期
       dueDateStatus = 'today';
       dueDateText = 'Due today';
     } else if (diffDays === 1) {
-      // 明天到期
       dueDateStatus = 'tomorrow';
       dueDateText = 'Due tomorrow';
     } else if (diffDays <= 7) {
-      // 本週內到期
       dueDateStatus = 'this_week';
       dueDateText = `Due in ${diffDays} days`;
     } else {
-      // 未來到期
       dueDateStatus = 'future';
       dueDateText = `Due in ${diffDays} days`;
     }
@@ -115,7 +106,7 @@ export class TodoService {
   }
 
   /**
-   * 獲取用戶的所有逾期任務
+   * Get all overdue tasks of the user
    */
   static async getOverdueTasks(userId: string): Promise<TodoTask[]> {
     const result = await pool.query(
@@ -123,8 +114,8 @@ export class TodoService {
        WHERE user_id = $1 
          AND task_type = 'TODO' 
          AND is_completed = false 
-         AND (is_overdue = true OR due_date < NOW())
-       ORDER BY due_date ASC`,
+         AND (is_overdue = true OR due_at < NOW())
+       ORDER BY due_at ASC`,
       [userId]
     );
 
@@ -132,7 +123,7 @@ export class TodoService {
   }
 
   /**
-   * 獲取即將到期的任務（未來7天內）
+   * Get the upcoming tasks (within 7 days)
    */
   static async getUpcomingTasks(userId: string, days: number = 7): Promise<TodoTask[]> {
     const result = await pool.query(
@@ -140,10 +131,10 @@ export class TodoService {
        WHERE user_id = $1 
          AND task_type = 'TODO' 
          AND is_completed = false 
-         AND due_date IS NOT NULL
-         AND due_date >= NOW()
-         AND due_date <= NOW() + INTERVAL '${days} days'
-       ORDER BY due_date ASC`,
+         AND due_at IS NOT NULL
+         AND due_at >= NOW()
+         AND due_at <= NOW() + INTERVAL '${days} days'
+       ORDER BY due_at ASC`,
       [userId]
     );
 
@@ -151,7 +142,7 @@ export class TodoService {
   }
 
   /**
-   * 批量更新任務的截止日期
+   * Batch update the due date of the task
    */
   static async updateTaskDueDate(
     taskId: string,
@@ -163,7 +154,6 @@ export class TodoService {
     try {
       await client.query('BEGIN');
 
-      // 驗證用戶擁有該任務
       const taskResult = await client.query(
         'SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
         [taskId, userId, 'TODO']
@@ -174,15 +164,13 @@ export class TodoService {
         return null;
       }
 
-      // 更新截止日期
       const updateResult = await client.query(
-        'UPDATE tasks SET due_date = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+        'UPDATE tasks SET due_at = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
         [dueDate, taskId]
       );
 
       const updatedTask = updateResult.rows[0];
 
-      // 重新計算逾期狀態
       if (dueDate && new Date(dueDate) < new Date() && !updatedTask.is_completed) {
         await client.query(
           'UPDATE tasks SET is_overdue = true WHERE id = $1',
@@ -210,7 +198,7 @@ export class TodoService {
   }
 
   /**
-   * 獲取 TODO 任務完成統計
+   * Get the TODO task completion statistics
    */
   static async getTodoCompletionStats(userId: string, days: number = 30): Promise<{
     totalCompleted: number;
@@ -229,7 +217,6 @@ export class TodoService {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
 
-      // 獲取期間內的完成統計
       const completedResult = await client.query(
         `SELECT COUNT(*) as count
          FROM tasks 
@@ -260,7 +247,6 @@ export class TodoService {
         [userId, startDate]
       );
 
-      // 按日期統計
       const dailyStatsResult = await client.query(
         `SELECT 
            DATE(created_at) as date,
@@ -302,7 +288,7 @@ export class TodoService {
   }
 
   /**
-   * 清理已完成的逾期任務標記 (可選功能)
+   * Clear the completed overdue task flags (optional feature)
    */
   static async clearCompletedOverdueFlags(): Promise<number> {
     const result = await pool.query(

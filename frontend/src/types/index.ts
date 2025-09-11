@@ -20,7 +20,8 @@ export enum RecurrenceType {
   EVERY_X_WEEKS = 'EVERY_X_WEEKS',
   EVERY_X_MONTHS = 'EVERY_X_MONTHS',
   WEEKLY_ON_DAYS = 'WEEKLY_ON_DAYS',
-  MONTHLY_ON_DAYS = 'MONTHLY_ON_DAYS'
+  MONTHLY_ON_DAYS = 'MONTHLY_ON_DAYS',
+  WEEK_OF_MONTH_ON_DAYS = 'WEEK_OF_MONTH_ON_DAYS'
 }
 
 export enum TimeRangeType {
@@ -60,6 +61,7 @@ export interface TaskBase {
   task_type: TaskType
   importance: number
   is_completed: boolean
+  order_index: number
   created_at: string
   updated_at: string
 }
@@ -70,26 +72,27 @@ export interface HabitTask extends TaskBase {
   threshold_count: number
   time_range_value: number
   time_range_type: TimeRangeType
-  last_completion_time?: string
+  last_completion_at?: string
 }
 
 export interface DailyTask extends TaskBase {
   task_type: TaskType.DAILY_TASK
-  target_date: string
+  started_at: string
   is_recurring: boolean
   recurrence_type: RecurrenceType
   recurrence_interval?: number
-  recurrence_day_of_week?: number
-  recurrence_day_of_month?: number
+  recurrence_days_of_week?: number[]
+  recurrence_days_of_month?: number[]
+  recurrence_weeks_of_month?: number[]
   current_consecutive_completed: number
   current_consecutive_missed: number
   max_consecutive_completed: number
-  last_reset_date?: string
+  last_reset_at?: string
 }
 
 export interface TodoTask extends TaskBase {
   task_type: TaskType.TODO
-  due_date?: string
+  due_at?: string
   is_overdue: boolean
 }
 
@@ -97,7 +100,7 @@ export interface LongTermTask extends TaskBase {
   task_type: TaskType.LONG_TERM
   progress: number
   show_progress: boolean
-  target_completion_date?: string
+  target_completion_at?: string
 }
 
 export type Task = HabitTask | DailyTask | TodoTask | LongTermTask
@@ -146,7 +149,7 @@ export interface Milestone {
   title: string
   description?: string
   is_completed: boolean
-  completion_date?: string
+  completion_at?: string
   order_index: number
   created_at: string
 }
@@ -156,7 +159,7 @@ export interface ApiResponse<T = any> {
   message?: string
   user?: User
   token?: string
-  task?: Task
+  task?: TaskBase
   tasks?: Task[]
   stats?: HabitStatistics | DailyTaskStatistics | LongTermTaskStatistics
   history?: HabitCompletionRecord[]

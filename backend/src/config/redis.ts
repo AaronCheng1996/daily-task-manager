@@ -6,7 +6,7 @@ import logger from '../lib/log/logger';
 dotenv.config();
 
 const redisClient = createClient({
-    url: Env.REDIS_URL || 'redis://localhost:6379',
+    url: Env.REDIS_URL,
 });
 
 redisClient.on('error', (err) => {

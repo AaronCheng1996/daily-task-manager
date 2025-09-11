@@ -7,7 +7,7 @@ dotenv.config();
 
 const pool = new Pool({
   connectionString: Env.DATABASE_URL,
-  ssl: Env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+  ssl: { rejectUnauthorized: false },
 });
 
 export const initPostgre = async () => {
