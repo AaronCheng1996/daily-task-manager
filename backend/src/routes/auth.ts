@@ -2,6 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import { UserService } from '../services/userService';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
+import logger from '../lib/log/logger';
 
 const router = express.Router();
 
@@ -41,7 +42,7 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ error: 'User already exists' });
     }
     
-    console.error('Registration error:', error);
+    logger.error('Registration error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -70,7 +71,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -105,7 +106,7 @@ router.patch('/profile', authenticateToken, async (req: AuthRequest, res) => {
       });
     }
     
-    console.error('Profile update error:', error);
+    logger.error('Profile update error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

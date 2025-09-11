@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { pool } from '../config/postgre';
-import { User } from '../types';
+import { User } from '../types/task';
 import { generateToken } from '../middleware/auth';
 
 const SALT_ROUNDS = 12;

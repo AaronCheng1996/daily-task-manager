@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { pool } from '../config/postgre';
-import { User } from '../types';
+import { User } from '../types/task';
+import Env from '../config/env';
 
 export interface AuthRequest extends Request {
   user?: User;
@@ -17,7 +18,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
   }
 
   try {
-    const jwtSecret = process.env.JWT_SECRET || 'default-secret-key';
+    const jwtSecret = Env.JWT_SECRET || 'default-secret-key';
     const decoded = jwt.verify(token, jwtSecret) as { userId: string };
     
     // Get user from database
@@ -37,8 +38,8 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
 };
 
 export const generateToken = (userId: string): string => {
-  const jwtSecret = process.env.JWT_SECRET || 'default-secret-key';
-  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  const jwtSecret = Env.JWT_SECRET || 'default-secret-key';
+  const expiresIn = Env.JWT_EXPIRES_IN || '7d';
   
   return jwt.sign({ userId }, jwtSecret, {
     expiresIn

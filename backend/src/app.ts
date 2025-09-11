@@ -10,11 +10,13 @@ import { initPostgre } from './config/postgre';
 import { initRedis } from './config/redis';
 import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
+import Env from './config/env';
+import logger from './lib/log/logger';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = Env.PORT;
 
 const limiter = rateLimit({
   windowMs: moment.duration(1, 'minutes').asMilliseconds(),
@@ -26,7 +28,7 @@ const limiter = rateLimit({
 
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : 'http://localhost:3000',
+  origin: Env.NODE_ENV === 'production' ? Env.FRONTEND_URL : 'http://localhost:3000',
   credentials: true
 }));
 app.use(morgan('combined'));
@@ -42,9 +44,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err.stack);
+  logger.error(err.stack);
   res.status(500).json({ 
-    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message 
+    error: Env.NODE_ENV === 'production' ? 'Internal server error' : err.message 
   });
 });
 
@@ -58,11 +60,11 @@ const startServer = async () => {
     await initRedis();
     
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV}`);
+      logger.info(`Server running on port ${PORT}`);
+      logger.info(`Environment: ${Env.NODE_ENV}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 };

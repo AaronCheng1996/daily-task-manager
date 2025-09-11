@@ -1,5 +1,5 @@
 import { pool } from '../config/postgre';
-import { Task, TaskType } from '../types';
+import { Task, TaskType } from '../types/task';
 import { HabitService } from './habitService';
 import { DailyTaskService } from './dailyTaskService';
 import { TodoService } from './todoService';

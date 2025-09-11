@@ -1,5 +1,5 @@
 import { pool } from '../config/postgre';
-import { HabitTask, HabitType, TimeRangeType } from '../types';
+import { HabitTask, HabitType, TimeRangeType } from '../types/task';
 
 export class HabitService {
   /**

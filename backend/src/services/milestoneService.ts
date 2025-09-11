@@ -1,5 +1,5 @@
 import { pool } from '../config/postgre';
-import { LongTermTask, Milestone } from '../types';
+import { LongTermTask, Milestone } from '../types/task';
 
 export class MilestoneService {
   /**

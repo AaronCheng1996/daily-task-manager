@@ -1,5 +1,5 @@
 import { pool } from '../config/postgre';
-import { TodoTask } from '../types';
+import { TodoTask } from '../types/task';
 
 export class TodoService {
   /**

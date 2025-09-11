@@ -6,7 +6,8 @@ import { HabitService } from '../services/habitService';
 import { DailyTaskService } from '../services/dailyTaskService';
 import { MilestoneService } from '../services/milestoneService';
 import { TodoService } from '../services/todoService';
-import { TaskType, HabitType, RecurrenceType, TimeRangeType } from '../types';
+import { TaskType, HabitType, RecurrenceType, TimeRangeType } from '../types/task';
+import logger from '../lib/log/logger';
 
 const router = express.Router();
 
@@ -48,7 +49,7 @@ router.get('/', async (req: AuthRequest, res) => {
     const tasks = await TaskService.getUserTasks(req.user!.id);
     res.json({ tasks });
   } catch (error) {
-    console.error('Get tasks error:', error);
+    logger.error('Get tasks error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -62,7 +63,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
     }
     res.json({ task });
   } catch (error) {
-    console.error('Get task error:', error);
+    logger.error('Get task error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -85,7 +86,7 @@ router.post('/', async (req: AuthRequest, res) => {
       });
     }
     
-    console.error('Create task error:', error);
+    logger.error('Create task error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -113,7 +114,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
       });
     }
     
-    console.error('Update task error:', error);
+    logger.error('Update task error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -128,7 +129,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     
     res.json({ message: 'Task deleted successfully' });
   } catch (error) {
-    console.error('Delete task error:', error);
+    logger.error('Delete task error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -146,7 +147,7 @@ router.post('/:id/toggle', async (req: AuthRequest, res) => {
       task
     });
   } catch (error) {
-    console.error('Toggle task error:', error);
+    logger.error('Toggle task error:', error);
     
     // Handle specific habit task errors
     if (error instanceof Error && error.message === 'Habit completion cannot be undone') {
@@ -163,7 +164,7 @@ router.get('/:id/habit-stats', async (req: AuthRequest, res) => {
     const stats = await HabitService.getHabitStatistics(req.params.id, req.user!.id);
     res.json({ stats });
   } catch (error) {
-    console.error('Get habit stats error:', error);
+    logger.error('Get habit stats error:', error);
     
     if (error instanceof Error && error.message === 'Habit task not found') {
       return res.status(404).json({ error: 'Habit task not found' });
@@ -184,7 +185,7 @@ router.get('/:id/habit-history', async (req: AuthRequest, res) => {
     );
     res.json({ history });
   } catch (error) {
-    console.error('Get habit history error:', error);
+    logger.error('Get habit history error:', error);
     
     if (error instanceof Error && error.message === 'Habit task not found') {
       return res.status(404).json({ error: 'Habit task not found' });
@@ -200,7 +201,7 @@ router.get('/:id/daily-stats', async (req: AuthRequest, res) => {
     const stats = await DailyTaskService.getDailyTaskStatistics(req.params.id, req.user!.id);
     res.json({ stats });
   } catch (error) {
-    console.error('Get daily task stats error:', error);
+    logger.error('Get daily task stats error:', error);
     
     if (error instanceof Error && error.message === 'Daily task not found') {
       return res.status(404).json({ error: 'Daily task not found' });
@@ -219,7 +220,7 @@ router.post('/daily-reset', async (_req: AuthRequest, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Daily reset error:', error);
+    logger.error('Daily reset error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -230,7 +231,7 @@ router.get('/:id/longterm-stats', async (req: AuthRequest, res) => {
     const stats = await MilestoneService.getLongTermTaskStatistics(req.params.id, req.user!.id);
     res.json({ stats });
   } catch (error) {
-    console.error('Get long-term task stats error:', error);
+    logger.error('Get long-term task stats error:', error);
     
     if (error instanceof Error && error.message === 'Long-term task not found') {
       return res.status(404).json({ error: 'Long-term task not found' });
@@ -246,7 +247,7 @@ router.get('/:id/milestones', async (req: AuthRequest, res) => {
     const milestones = await MilestoneService.getTaskMilestones(req.params.id, req.user!.id);
     res.json({ milestones });
   } catch (error) {
-    console.error('Get milestones error:', error);
+    logger.error('Get milestones error:', error);
     
     if (error instanceof Error && error.message === 'Long-term task not found') {
       return res.status(404).json({ error: 'Long-term task not found' });
@@ -288,7 +289,7 @@ router.post('/:id/milestones', async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Long-term task not found' });
     }
     
-    console.error('Create milestone error:', error);
+    logger.error('Create milestone error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -325,7 +326,7 @@ router.patch('/milestones/:milestoneId', async (req: AuthRequest, res) => {
       });
     }
     
-    console.error('Update milestone error:', error);
+    logger.error('Update milestone error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -347,7 +348,7 @@ router.post('/milestones/:milestoneId/toggle', async (req: AuthRequest, res) => 
       return res.status(404).json({ error: 'Milestone not found' });
     }
     
-    console.error('Toggle milestone error:', error);
+    logger.error('Toggle milestone error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -366,7 +367,7 @@ router.delete('/milestones/:milestoneId', async (req: AuthRequest, res) => {
     
     res.json({ message: 'Milestone deleted successfully' });
   } catch (error) {
-    console.error('Delete milestone error:', error);
+    logger.error('Delete milestone error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -402,7 +403,7 @@ router.put('/:id/milestones/reorder', async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'Long-term task not found' });
     }
     
-    console.error('Reorder milestones error:', error);
+    logger.error('Reorder milestones error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -413,7 +414,7 @@ router.get('/:id/todo-stats', async (req: AuthRequest, res) => {
     const stats = await TodoService.getTodoTaskStatistics(req.params.id, req.user!.id);
     res.json({ stats });
   } catch (error) {
-    console.error('Get TODO stats error:', error);
+    logger.error('Get TODO stats error:', error);
     
     if (error instanceof Error && error.message === 'TODO task not found') {
       return res.status(404).json({ error: 'TODO task not found' });
@@ -429,7 +430,7 @@ router.get('/overdue', async (req: AuthRequest, res) => {
     const tasks = await TodoService.getOverdueTasks(req.user!.id);
     res.json({ tasks });
   } catch (error) {
-    console.error('Get overdue tasks error:', error);
+    logger.error('Get overdue tasks error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -441,7 +442,7 @@ router.get('/upcoming', async (req: AuthRequest, res) => {
     const tasks = await TodoService.getUpcomingTasks(req.user!.id, days);
     res.json({ tasks });
   } catch (error) {
-    console.error('Get upcoming tasks error:', error);
+    logger.error('Get upcoming tasks error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -474,7 +475,7 @@ router.patch('/:id/due-date', async (req: AuthRequest, res) => {
       });
     }
     
-    console.error('Update due date error:', error);
+    logger.error('Update due date error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -486,7 +487,7 @@ router.get('/todo-completion-stats', async (req: AuthRequest, res) => {
     const stats = await TodoService.getTodoCompletionStats(req.user!.id, days);
     res.json({ stats });
   } catch (error) {
-    console.error('Get TODO completion stats error:', error);
+    logger.error('Get TODO completion stats error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -500,7 +501,7 @@ router.post('/update-overdue', async (_req: AuthRequest, res) => {
       ...result
     });
   } catch (error) {
-    console.error('Update overdue tasks error:', error);
+    logger.error('Update overdue tasks error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
