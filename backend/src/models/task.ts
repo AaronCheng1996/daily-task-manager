@@ -1,17 +1,21 @@
-import type { Task as TaskBase } from '../generated/prisma';
-import type { HabitType, RecurrenceType, TimeRangeType } from '../generated/prisma';
+import type { TaskType, HabitType, TimeRangeType, RecurrenceType } from '../generated/prisma';
 
-export type HabitTask = TaskBase & {
-  task_type: 'HABIT';
+export interface TaskData {
+  task_type: TaskType;
+  title: string;
+  description: string | null;
+  importance: number;
+  order_index: number;
+}
+
+export interface HabitTaskData extends TaskData {
   habit_type: HabitType;
   threshold_count: number;
   time_range_value: number;
   time_range_type: TimeRangeType;
-  last_completion_time?: Date | null;
-};
+}
 
-export type DailyTask = TaskBase & {
-  task_type: 'DAILY_TASK';
+export interface DailyTaskData extends TaskData {
   started_at: Date | null;
   is_recurring: boolean;
   recurrence_type: RecurrenceType | null;
@@ -19,26 +23,16 @@ export type DailyTask = TaskBase & {
   recurrence_days_of_week: number[];
   recurrence_days_of_month: number[];
   recurrence_weeks_of_month: number[];
-  current_consecutive_completed: number;
-  current_consecutive_missed: number;
-  max_consecutive_completed: number;
-  last_reset_at: Date | null;
-};
+}
 
-export type TodoTask = TaskBase & {
-  task_type: 'TODO';
+export interface TodoTaskData extends TaskData {
   due_at: Date | null;
-  is_overdue: boolean;
-};
+}
 
-export type LongTermTask = TaskBase & {
-  task_type: 'LONG_TERM';
-  progress: number;
+export interface LongTermTaskData extends TaskData {
   show_progress: boolean;
   target_completion_at: Date | null;
-};
-
-export type Task = HabitTask | DailyTask | TodoTask | LongTermTask;
+}
 
 export interface ApiResponse<T = any> {
   success: boolean;

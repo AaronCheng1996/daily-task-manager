@@ -1,5 +1,5 @@
-import type { User as UserBase } from '../generated/prisma';
+import { User as UserBase } from '../generated/prisma';
 
-export type User = UserBase & {
+export interface User extends Omit<UserBase, 'password_hash'> {
   password_hash: string;
-};
+} 

@@ -1,22 +1,24 @@
 import { ulid } from 'ulid';
 import { prisma } from '../utils/prisma';
-import { Task } from '../models/task';
 import { TaskType } from '../generated/prisma';
 import { HabitService } from './habitService';
 import { DailyTaskService } from './dailyTaskService';
 import { TodoService } from './todoService';
+import { HabitTaskData, DailyTaskData, TodoTaskData, LongTermTaskData, TaskData } from '../models/task';
+
+let lastTaskOrderIndex = 0;
 
 export class TaskService {
-  static async getUserTasks(userId: string): Promise<Task[]> {
+  static async getUserTasks(userId: string): Promise<TaskData[]> {
     const tasks = await prisma.task.findMany({
       where: { user_id: userId },
       orderBy: { created_at: 'desc' }
     });
     
-    return tasks as Task[];
+    return tasks as TaskData[];
   }
 
-  static async getTaskById(taskId: string, userId: string): Promise<Task | null> {
+  static async getTaskById(taskId: string, userId: string): Promise<TaskData | null> {
     const task = await prisma.task.findFirst({
       where: {
         id: taskId,
@@ -24,71 +26,53 @@ export class TaskService {
       }
     });
     
-    return task as Task | null;
+    return task as TaskData | null;
   }
 
-  static async createTask(userId: string, taskData: any): Promise<Task> {
-    const taskId = ulid();
-    
-    const baseData = {
-      id: taskId,
-      user_id: userId,
-      title: taskData.title,
-      description: taskData.description || null,
-      task_type: taskData.task_type,
-      importance: taskData.importance || 1,
-      order_index: taskData.order_index || 0
-    };
-    
-    let additionalData: any = {};
-    
-    switch (taskData.task_type) {
+  static async createTask(userId: string, taskData: any): Promise<TaskData> {
+    const taskType = taskData.task_type;
+    if (!taskType) {
+      throw new Error('Task type is required');
+    }
+
+    let newTask: TaskData | undefined;
+    switch (taskType) {
       case TaskType.HABIT:
-        additionalData = {
-          habit_type: taskData.habit_type,
-          threshold_count: taskData.threshold_count,
-          time_range_value: taskData.time_range_value,
-          time_range_type: taskData.time_range_type
-        };
+        newTask = taskData as HabitTaskData;
         break;
-        
       case TaskType.DAILY_TASK:
-        additionalData = {
-          started_at: taskData.started_at ? new Date(taskData.started_at) : new Date(),
-          is_recurring: taskData.is_recurring !== undefined ? taskData.is_recurring : true,
-          recurrence_type: taskData.recurrence_type,
-          recurrence_interval: taskData.recurrence_interval,
-          recurrence_days_of_week: taskData.recurrence_days_of_week || [],
-          recurrence_days_of_month: taskData.recurrence_days_of_month || [],
-          recurrence_weeks_of_month: taskData.recurrence_weeks_of_month || []
-        };
+        newTask = taskData as DailyTaskData;
         break;
-        
       case TaskType.TODO:
-        additionalData = {
-          due_at: taskData.due_at ? new Date(taskData.due_at) : null
-        };
-        break;
-        
+        newTask = taskData as TodoTaskData;
+            break;
       case TaskType.LONG_TERM:
-        additionalData = {
-          show_progress: taskData.show_progress !== undefined ? taskData.show_progress : true,
-          target_completion_at: taskData.target_completion_at ? new Date(taskData.target_completion_at) : null
-        };
+        newTask = taskData as LongTermTaskData;
         break;
     }
-    
-    const task = await prisma.task.create({
+
+    if (newTask === undefined) {
+      throw new Error('Invalid task data');
+    }
+
+    if (lastTaskOrderIndex === 0) {
+      lastTaskOrderIndex = await this.getLastTaskOrderIndex(userId);
+    }
+    lastTaskOrderIndex += 1000;
+
+    const result = await prisma.task.create({
       data: {
-        ...baseData,
-        ...additionalData
+        id: ulid(),
+        ...newTask,
+        user_id: userId,
+        order_index: lastTaskOrderIndex
       }
     });
     
-    return task as Task;
+    return result as TaskData;
   }
 
-  static async updateTask(taskId: string, userId: string, updates: Partial<any>): Promise<Task | null> {
+  static async updateTask(taskId: string, userId: string, updates: Partial<any>): Promise<TaskData | null> {
     const validUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
     );
@@ -125,7 +109,7 @@ export class TaskService {
       }
     });
     
-    return updatedTask as Task | null;
+    return updatedTask as TaskData | null;
   }
 
   static async deleteTask(taskId: string, userId: string): Promise<boolean> {
@@ -139,7 +123,7 @@ export class TaskService {
     return result.count > 0;
   }
 
-  static async toggleTaskCompletion(taskId: string, userId: string): Promise<Task | null> {
+  static async toggleTaskCompletion(taskId: string, userId: string): Promise<TaskData | null> {
     return await prisma.$transaction(async (tx) => {
       const task = await tx.task.findFirst({
         where: {
@@ -157,7 +141,7 @@ export class TaskService {
       if (task.task_type === TaskType.HABIT) {
         if (newCompletedStatus) {
           const habitResult = await HabitService.recordHabitCompletion(taskId, userId);
-          return habitResult.task;
+          return habitResult.task as TaskData;
         } else {
           throw new Error('Habit completion cannot be undone');
         }
@@ -166,7 +150,7 @@ export class TaskService {
       if (task.task_type === TaskType.DAILY_TASK) {
         const targetDate = new Date();
         const dailyResult = await DailyTaskService.toggleDailyTaskCompletion(taskId, userId, targetDate);
-        return dailyResult.task;
+        return dailyResult.task as TaskData;
       }
       
       const updateData: any = {
@@ -184,11 +168,20 @@ export class TaskService {
         data: updateData
       });
       
-      return updatedTask as Task;
+      return updatedTask as TaskData;
     });
   }
 
   static async updateOverdueTasks(): Promise<void> {
     await TodoService.updateOverdueTasks();
+  }
+
+  private static async getLastTaskOrderIndex(userId: string): Promise<number> {
+    const result = await prisma.task.findFirst({
+        where: { user_id: userId },
+        orderBy: { order_index: 'desc' },
+        select: { order_index: true }
+    });
+    return result?.order_index ?? 0;
   }
 }
