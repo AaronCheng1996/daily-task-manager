@@ -28,8 +28,6 @@ router.delete('/tasks/:id/milestones/:milestoneId', taskController.deleteMilesto
 router.put('/tasks/:id/milestones/reorder', taskController.reorderMilestones);
 router.get('/tasks/overdue', taskController.getOverdueTasks);
 router.get('/tasks/upcoming', taskController.getUpcomingTasks);
-router.patch('/tasks/:id/due-date', taskController.updateTaskDueDate);
-router.get('/tasks/todo-completion-stats', taskController.getTodoCompletionStats);
 router.post('/tasks/update-overdue', taskController.updateOverdueTasks);
 
 export default router;

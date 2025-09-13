@@ -1,8 +1,9 @@
+import { Response } from 'express';
 import { z } from 'zod';
 import { UserService } from '../services/userService';
 import { AuthRequest } from '../utils/auth';
 import logger from '../utils/logger';
-import { Response } from 'express';
+import { ErrorType, SuccessMessage } from '../utils/messages.enum';
 
 const registerSchema = z.object({
     username: z.string().min(3).max(50),
@@ -23,24 +24,24 @@ const userController = {
             const result = await UserService.register(username, email, password);
             
             res.status(201).json({
-            message: 'User registered successfully',
+            message: SuccessMessage.USER_REGISTERED,
             user: result.user,
             token: result.token
             });
         } catch (error) {
             if (error instanceof z.ZodError) {
             res.status(400).json({ 
-                error: 'Validation failed', 
+                error: ErrorType.VALIDATION_ERROR, 
                 details: error.errors 
             });
             }
             
-            if (error instanceof Error && error.message === 'User already exists') {
-            res.status(409).json({ error: 'User already exists' });
+            if (error instanceof Error && error.message === ErrorType.USER_ALREADY_EXISTS) {
+            res.status(409).json({ error: ErrorType.USER_ALREADY_EXISTS });
             }
             
             logger.error('Registration error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
 
@@ -51,24 +52,24 @@ const userController = {
             const result = await UserService.login(usernameOrEmail, password);
             
             res.json({
-            message: 'Login successful',
+            message: SuccessMessage.USER_LOGGED_IN,
             user: result.user,
             token: result.token
             });
         } catch (error) {
             if (error instanceof z.ZodError) {
             res.status(400).json({ 
-                error: 'Validation failed', 
+                error: ErrorType.VALIDATION_ERROR, 
                 details: error.errors 
             });
             }
             
-            if (error instanceof Error && error.message === 'Invalid credentials') {
-            res.status(401).json({ error: 'Invalid credentials' });
+            if (error instanceof Error && error.message === ErrorType.INVALID_CREDENTIALS) {
+            res.status(401).json({ error: ErrorType.INVALID_CREDENTIALS });
             }
             
             logger.error('Login error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
 
@@ -89,19 +90,19 @@ const userController = {
             const updatedUser = await UserService.updateUser((req as AuthRequest).user!.id, updates);
             
             res.json({
-            message: 'Profile updated successfully',
+            message: SuccessMessage.USER_PROFILE_UPDATED,
             user: updatedUser
             });
         } catch (error) {
             if (error instanceof z.ZodError) {
             res.status(400).json({ 
-                error: 'Validation failed', 
+                error: ErrorType.VALIDATION_ERROR, 
                 details: error.errors 
             });
             }
             
             logger.error('Profile update error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     }
 }

@@ -1,24 +1,26 @@
-import { ulid } from 'ulid';
 import { prisma } from '../utils/prisma';
-import { TaskType } from '../generated/prisma';
+import { TaskType, Task } from '../generated/prisma';
 import { HabitService } from './habitService';
 import { DailyTaskService } from './dailyTaskService';
-import { TodoService } from './todoService';
-import { HabitTaskData, DailyTaskData, TodoTaskData, LongTermTaskData, TaskData } from '../models/task';
+import { ulid } from 'ulid';
+import { ErrorType } from '../utils/messages.enum';
 
 let lastTaskOrderIndex = 0;
 
 export class TaskService {
-  static async getUserTasks(userId: string): Promise<TaskData[]> {
+  static async getUserTasks(userId: string, filter: object, skip: number, take: number): Promise<Task[]> {
     const tasks = await prisma.task.findMany({
       where: { user_id: userId },
-      orderBy: { created_at: 'desc' }
+      orderBy: { created_at: 'desc' },
+      skip,
+      take,
+      ...filter
     });
     
-    return tasks as TaskData[];
+    return tasks as Task[];
   }
 
-  static async getTaskById(taskId: string, userId: string): Promise<TaskData | null> {
+  static async getTaskById(taskId: string, userId: string): Promise<Task | null> {
     const task = await prisma.task.findFirst({
       where: {
         id: taskId,
@@ -26,33 +28,16 @@ export class TaskService {
       }
     });
     
-    return task as TaskData | null;
+    return task as Task | null;
   }
 
-  static async createTask(userId: string, taskData: any): Promise<TaskData> {
-    const taskType = taskData.task_type;
-    if (!taskType) {
-      throw new Error('Task type is required');
-    }
-
-    let newTask: TaskData | undefined;
-    switch (taskType) {
-      case TaskType.HABIT:
-        newTask = taskData as HabitTaskData;
-        break;
-      case TaskType.DAILY_TASK:
-        newTask = taskData as DailyTaskData;
-        break;
-      case TaskType.TODO:
-        newTask = taskData as TodoTaskData;
-            break;
-      case TaskType.LONG_TERM:
-        newTask = taskData as LongTermTaskData;
-        break;
-    }
-
-    if (newTask === undefined) {
-      throw new Error('Invalid task data');
+  static async createTask(userId: string, taskData: any): Promise<Task> {
+    let newTask: Task | undefined;
+    try {
+      newTask = taskData as Task;
+      newTask.id = ulid();
+    } catch (error) {
+      throw new Error(ErrorType.BAD_REQUEST);
     }
 
     if (lastTaskOrderIndex === 0) {
@@ -60,70 +45,44 @@ export class TaskService {
     }
     lastTaskOrderIndex += 1000;
 
-    const result = await prisma.task.create({
-      data: {
-        id: ulid(),
-        ...newTask,
-        user_id: userId,
-        order_index: lastTaskOrderIndex
-      }
-    });
-    
-    return result as TaskData;
+    try {
+      const result = await prisma.task.create({
+        data: {
+          ...newTask,
+          user_id: userId,
+          order_index: lastTaskOrderIndex
+        }
+      });
+      return result as Task;
+    } catch (error) {
+      throw error;
+    }    
   }
 
-  static async updateTask(taskId: string, userId: string, updates: Partial<any>): Promise<TaskData | null> {
-    const validUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, value]) => value !== undefined)
-    );
-    
-    if (Object.keys(validUpdates).length === 0) {
-      throw new Error('No valid updates provided');
+  static async updateTask(taskId: string, userId: string, updates: Partial<any>): Promise<Task | null> {
+    try {
+      const updatedTask = await prisma.task.update({
+        where: { id: taskId },
+        data: updates
+      });    
+      return updatedTask as Task;
+    } catch (error) {
+      throw error;
     }
-    
-    const processedUpdates: any = {};
-    for (const [key, value] of Object.entries(validUpdates)) {
-      if (key.includes('date') || key.includes('_date') || key.includes('_at')) {
-        processedUpdates[key] = value ? new Date(value as string) : null;
-      } else {
-        processedUpdates[key] = value;
-      }
-    }
-    
-    const task = await prisma.task.updateMany({
-      where: {
-        id: taskId,
-        user_id: userId
-      },
-      data: processedUpdates
-    });
-    
-    if (task.count === 0) {
-      return null;
-    }
-    
-    const updatedTask = await prisma.task.findFirst({
-      where: {
-        id: taskId,
-        user_id: userId
-      }
-    });
-    
-    return updatedTask as TaskData | null;
   }
 
   static async deleteTask(taskId: string, userId: string): Promise<boolean> {
-    const result = await prisma.task.deleteMany({
+    const result = await prisma.task.delete({
       where: {
         id: taskId,
         user_id: userId
       }
     });
     
-    return result.count > 0;
+    return result !== null;
   }
 
-  static async toggleTaskCompletion(taskId: string, userId: string): Promise<TaskData | null> {
+  static async toggleTaskCompletion(taskId: string, userId: string): Promise<Task | null> {
     return await prisma.$transaction(async (tx) => {
       const task = await tx.task.findFirst({
         where: {
@@ -133,26 +92,21 @@ export class TaskService {
       });
       
       if (!task) {
-        return null;
+        throw new Error(ErrorType.NOT_FOUND);
       }
       
-      const newCompletedStatus = !task.is_completed;
-      
       if (task.task_type === TaskType.HABIT) {
-        if (newCompletedStatus) {
-          const habitResult = await HabitService.recordHabitCompletion(taskId, userId);
-          return habitResult.task as TaskData;
-        } else {
-          throw new Error('Habit completion cannot be undone');
-        }
+        const habitResult = await HabitService.recordHabitCompletion(taskId);
+        return habitResult.task as Task;
       }
       
       if (task.task_type === TaskType.DAILY_TASK) {
         const targetDate = new Date();
-        const dailyResult = await DailyTaskService.toggleDailyTaskCompletion(taskId, userId, targetDate);
-        return dailyResult.task as TaskData;
+        const dailyResult = await DailyTaskService.toggleDailyTaskCompletion(taskId, targetDate);
+        return dailyResult.task as Task;
       }
       
+      const newCompletedStatus = !task.is_completed;
       const updateData: any = {
         is_completed: newCompletedStatus
       };
@@ -168,20 +122,16 @@ export class TaskService {
         data: updateData
       });
       
-      return updatedTask as TaskData;
+      return updatedTask as Task;
     });
   }
 
-  static async updateOverdueTasks(): Promise<void> {
-    await TodoService.updateOverdueTasks();
-  }
-
   private static async getLastTaskOrderIndex(userId: string): Promise<number> {
-    const result = await prisma.task.findFirst({
+    const task = await prisma.task.findFirst({
         where: { user_id: userId },
         orderBy: { order_index: 'desc' },
         select: { order_index: true }
     });
-    return result?.order_index ?? 0;
+    return task?.order_index ?? 0;
   }
 }

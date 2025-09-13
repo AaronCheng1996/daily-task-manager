@@ -1,7 +1,15 @@
 import { ulid } from 'ulid';
 import { prisma } from '../utils/prisma';
-import { LongTermTask, Milestone } from '../models/task';
+import { Task, Milestone, TaskType } from '../generated/prisma';
 import moment from 'moment';
+import { Decimal } from '@prisma/client/runtime/library';
+import { ErrorType } from '../utils/messages.enum';
+
+interface LongTermTask extends Task {
+  progress: Decimal;
+  is_completed: boolean;
+  target_completion_at: Date;
+}
 
 export class MilestoneService {
   /**
@@ -9,49 +17,49 @@ export class MilestoneService {
    */
   static async createMilestone(
     taskId: string,
-    userId: string,
     milestoneData: {
       title: string;
       description?: string;
       order_index: number;
     }
   ): Promise<Milestone> {
-    const client = await pool.connect();
+    const task = await prisma.task.findFirst({
+      where: { id: taskId }
+    })
 
-    try {
-      await client.query('BEGIN');
-
-      const taskResult = await client.query(
-        'SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
-        [taskId, userId, 'LONG_TERM']
-      );
-
-      if (taskResult.rows.length === 0) {
-        throw new Error('Long-term task not found');
-      }
-
-      const milestoneId = ulid();
-      const milestoneResult = await client.query(
-        `INSERT INTO milestones (id, task_id, title, description, order_index)
-         VALUES ($1, $2, $3, $4, $5)
-         RETURNING *`,
-        [milestoneId, taskId, milestoneData.title, milestoneData.description || null, milestoneData.order_index]
-      );
-
-      const milestone = milestoneResult.rows[0];
-
-      await this.recalculateTaskProgress(client, taskId);
-
-      await client.query('COMMIT');
-      
-      return milestone;
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+    if (!task) {
+      throw new Error(ErrorType.NOT_FOUND);
     }
+
+    if (task.task_type !== TaskType.LONG_TERM) {
+      throw new Error(ErrorType.BAD_REQUEST);
+    }
+
+    const milestone = await prisma.milestone.create({
+      data: {
+        id: ulid(),
+        task_id: taskId,
+        title: milestoneData.title,
+        description: milestoneData.description || null,
+        order_index: milestoneData.order_index
+      }
+    })  
+
+    await this.recalculateTaskProgress(taskId);
+
+    return milestone as Milestone;
+  }
+
+  /**
+   * Get all milestones of the task
+   */
+  static async getTaskMilestones(taskId: string): Promise<Milestone[]> {
+    const milestones = await prisma.milestone.findMany({
+      where: { task_id: taskId },
+      orderBy: { order_index: 'asc', created_at: 'asc' }
+    });
+
+    return milestones;
   }
 
   /**
@@ -59,71 +67,20 @@ export class MilestoneService {
    */
   static async updateMilestone(
     milestoneId: string,
-    userId: string,
     updates: {
       title?: string;
       description?: string;
       order_index?: number;
     }
   ): Promise<Milestone | null> {
-    const client = await pool.connect();
-
     try {
-      await client.query('BEGIN');
-
-      const milestoneResult = await client.query(
-        `SELECT m.*, t.user_id 
-         FROM milestones m
-         JOIN tasks t ON m.task_id = t.id
-         WHERE m.id = $1 AND t.user_id = $2`,
-        [milestoneId, userId]
-      );
-
-      if (milestoneResult.rows.length === 0) {
-        await client.query('ROLLBACK');
-        return null;
-      }
-
-      // const milestone = milestoneResult.rows[0]; // Currently unused
-
-      const validUpdates = Object.fromEntries(
-        Object.entries(updates).filter(([_, value]) => value !== undefined)
-      );
-
-      if (Object.keys(validUpdates).length === 0) {
-        await client.query('ROLLBACK');
-        throw new Error('No valid updates provided');
-      }
-
-      const setClause = [];
-      const values = [];
-      let paramIndex = 1;
-
-      for (const [key, value] of Object.entries(validUpdates)) {
-        setClause.push(`${key} = $${paramIndex}`);
-        values.push(value);
-        paramIndex++;
-      }
-
-      values.push(milestoneId);
-
-      const updateResult = await client.query(
-        `UPDATE milestones 
-         SET ${setClause.join(', ')}
-         WHERE id = $${paramIndex}
-         RETURNING *`,
-        values
-      );
-
-      await client.query('COMMIT');
-      
-      return updateResult.rows[0];
-
+      const updatedMilestone = await prisma.milestone.update({
+        where: { id: milestoneId },
+        data: updates
+      });
+      return updatedMilestone as Milestone;
     } catch (error) {
-      await client.query('ROLLBACK');
       throw error;
-    } finally {
-      client.release();
     }
   }
 
@@ -132,160 +89,89 @@ export class MilestoneService {
    */
   static async toggleMilestoneCompletion(
     milestoneId: string,
-    userId: string
   ): Promise<{
     milestone: Milestone;
     taskProgress: number;
     taskCompleted: boolean;
   }> {
-    const client = await pool.connect();
 
-    try {
-      await client.query('BEGIN');
+    const milestone = await prisma.milestone.findFirst({
+      where: { id: milestoneId }
+    });
 
-      const milestoneResult = await client.query(
-        `SELECT m.*, t.user_id 
-         FROM milestones m
-         JOIN tasks t ON m.task_id = t.id
-         WHERE m.id = $1 AND t.user_id = $2`,
-        [milestoneId, userId]
-      );
-
-      if (milestoneResult.rows.length === 0) {
-        throw new Error('Milestone not found');
-      }
-
-      const milestone = milestoneResult.rows[0];
-      const newCompletedStatus = !milestone.is_completed;
-
-      const updateResult = await client.query(
-        `UPDATE milestones 
-         SET is_completed = $1, 
-             completion_at = $2
-         WHERE id = $3
-         RETURNING *`,
-        [
-          newCompletedStatus,
-          newCompletedStatus ? new Date() : null,
-          milestoneId
-        ]
-      );
-
-      const updatedMilestone = updateResult.rows[0];
-
-      const { progress, isCompleted } = await this.recalculateTaskProgress(client, milestone.task_id);
-
-      await client.query('COMMIT');
-
-      return {
-        milestone: updatedMilestone,
-        taskProgress: progress,
-        taskCompleted: isCompleted
-      };
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+    if (!milestone) {
+      throw new Error(ErrorType.NOT_FOUND);
     }
+
+    const newCompletedStatus = !milestone.is_completed;
+    const updateData: any = {
+      is_completed: newCompletedStatus
+    };
+
+    if (newCompletedStatus) {
+      updateData.completion_at = new Date();
+    }
+
+    const updatedMilestone = await prisma.milestone.update({
+      where: { id: milestoneId },
+      data: updateData
+    });
+
+    const { progress, isCompleted } = await this.recalculateTaskProgress(milestone.task_id);
+
+    return {
+      milestone: updatedMilestone as Milestone,
+      taskProgress: progress,
+      taskCompleted: isCompleted
+    };
   }
 
   /**
    * Delete a milestone
    */
-  static async deleteMilestone(milestoneId: string, userId: string): Promise<boolean> {
-    const client = await pool.connect();
+  static async deleteMilestone(milestoneId: string): Promise<boolean> {
+    const milestone = await prisma.milestone.findFirst({
+      where: { id: milestoneId }
+    });
 
-    try {
-      await client.query('BEGIN');
-
-      const milestoneResult = await client.query(
-        `SELECT m.task_id, t.user_id 
-         FROM milestones m
-         JOIN tasks t ON m.task_id = t.id
-         WHERE m.id = $1 AND t.user_id = $2`,
-        [milestoneId, userId]
-      );
-
-      if (milestoneResult.rows.length === 0) {
-        await client.query('ROLLBACK');
-        return false;
-      }
-
-      const taskId = milestoneResult.rows[0].task_id;
-
-      const deleteResult = await client.query(
-        'DELETE FROM milestones WHERE id = $1',
-        [milestoneId]
-      );
-
-      if (deleteResult.rowCount === 0) {
-        await client.query('ROLLBACK');
-        return false;
-      }
-
-      await this.recalculateTaskProgress(client, taskId);
-
-      await client.query('COMMIT');
-      
-      return true;
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
-  }
-
-  /**
-   * Get all milestones of the task
-   */
-  static async getTaskMilestones(taskId: string, userId: string): Promise<Milestone[]> {
-    const taskResult = await pool.query(
-      'SELECT 1 FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
-      [taskId, userId, 'LONG_TERM']
-    );
-
-    if (taskResult.rows.length === 0) {
-      throw new Error('Long-term task not found');
+    if (!milestone) {
+      throw new Error(ErrorType.NOT_FOUND);
     }
 
-    const milestonesResult = await pool.query(
-      'SELECT * FROM milestones WHERE task_id = $1 ORDER BY order_index ASC, created_at ASC',
-      [taskId]
-    );
+    const result = await prisma.milestone.delete({
+      where: { id: milestoneId }
+    });
 
-    return milestonesResult.rows;
+    await this.recalculateTaskProgress(milestone.task_id);
+
+    return result !== null;
   }
+
+  
 
   /**
    * Recalculate the task progress
    */
   private static async recalculateTaskProgress(
-    client: any,
     taskId: string
   ): Promise<{
     progress: number;
     isCompleted: boolean;
   }> {
-    const milestonesResult = await client.query(
-      'SELECT COUNT(*) as total, COUNT(CASE WHEN is_completed = true THEN 1 END) as completed FROM milestones WHERE task_id = $1',
-      [taskId]
-    );
-
-    const { total, completed } = milestonesResult.rows[0];
-    const totalCount = parseInt(total, 10);
-    const completedCount = parseInt(completed, 10);
+    const milestones = await prisma.milestone.findMany({
+      where: { task_id: taskId }
+    });
+    
+    const totalCount = milestones.length;
+    const completedCount = milestones.filter(m => m.is_completed).length;
 
     const progress = totalCount > 0 ? completedCount / totalCount : 0;
     const isCompleted = totalCount > 0 && completedCount === totalCount;
 
-    await client.query(
-      'UPDATE tasks SET progress = $1, is_completed = $2, updated_at = NOW() WHERE id = $3',
-      [progress, isCompleted, taskId]
-    );
+    await prisma.task.update({
+      where: { id: taskId },
+      data: { progress: progress, is_completed: isCompleted, updated_at: new Date() }
+    });
 
     return {
       progress,
@@ -296,7 +182,7 @@ export class MilestoneService {
   /**
    * Get the long-term task statistics
    */
-  static async getLongTermTaskStatistics(taskId: string, userId: string): Promise<{
+  static async getLongTermTaskStatistics(taskId: string): Promise<{
     totalMilestones: number;
     completedMilestones: number;
     progress: number;
@@ -307,23 +193,24 @@ export class MilestoneService {
       pending: Milestone[];
     };
   }> {
-    const taskResult = await pool.query(
-      'SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
-      [taskId, userId, 'LONG_TERM']
-    );
 
-    if (taskResult.rows.length === 0) {
-      throw new Error('Long-term task not found');
+    const task = await prisma.task.findFirst({
+      where: { id: taskId, task_type: TaskType.LONG_TERM }
+    });
+
+    if (!task) {
+      throw new Error(ErrorType.NOT_FOUND);
     }
 
-    const task = taskResult.rows[0] as LongTermTask;
+    if (task.task_type !== TaskType.LONG_TERM) {
+      throw new Error(ErrorType.BAD_REQUEST);
+    }
 
-    const milestonesResult = await pool.query(
-      'SELECT * FROM milestones WHERE task_id = $1 ORDER BY order_index ASC, created_at ASC',
-      [taskId]
-    );
+    const milestones = await prisma.milestone.findMany({
+      where: { task_id: taskId },
+      orderBy: { order_index: 'asc', created_at: 'asc' }
+    });
 
-    const milestones = milestonesResult.rows;
     const totalMilestones = milestones.length;
     const completedMilestones = milestones.filter(m => m.is_completed).length;
     const progress = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
@@ -361,37 +248,23 @@ export class MilestoneService {
    */
   static async reorderMilestones(
     taskId: string,
-    userId: string,
     milestoneOrders: Array<{ id: string; order_index: number }>
   ): Promise<void> {
-    const client = await pool.connect();
+    const task = await prisma.task.findFirst({
+      where: { id: taskId, task_type: TaskType.LONG_TERM }
+    });
 
-    try {
-      await client.query('BEGIN');
-
-      const taskResult = await client.query(
-        'SELECT 1 FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
-        [taskId, userId, 'LONG_TERM']
-      );
-
-      if (taskResult.rows.length === 0) {
-        throw new Error('Long-term task not found');
-      }
-
-      for (const { id, order_index } of milestoneOrders) {
-        await client.query(
-          'UPDATE milestones SET order_index = $1 WHERE id = $2 AND task_id = $3',
-          [order_index, id, taskId]
-        );
-      }
-
-      await client.query('COMMIT');
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+    if (!task) {
+      throw new Error(ErrorType.NOT_FOUND);
     }
+
+    for (const { id, order_index } of milestoneOrders) {
+      await prisma.milestone.update({
+        where: { id: id, task_id: taskId },
+        data: { order_index: order_index }
+      });
+    }
+
+    await this.recalculateTaskProgress(taskId);
   }
 }

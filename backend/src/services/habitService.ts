@@ -1,113 +1,92 @@
 import { ulid } from 'ulid';
+import { Task, TimeRangeType, HabitType, TaskType } from '../generated/prisma';
 import { prisma } from '../utils/prisma';
-import { HabitTask, HabitType, TimeRangeType } from '../models/task';
+import moment from 'moment';
+import { ErrorType } from '../utils/messages.enum';
+
+interface HabitTask extends Task {
+  habit_type: HabitType;
+  threshold_count: number;
+  time_range_value: number;
+  time_range_type: TimeRangeType;
+  last_completion_time: Date | null;
+}
 
 export class HabitService {
   /**
-   * 記錄習慣完成 (不可撤銷)
+   * Record habit completion (cannot be undone)
    */
-  static async recordHabitCompletion(taskId: string, userId: string): Promise<{
+  static async recordHabitCompletion(taskId: string): Promise<{
     task: HabitTask;
     completionCount: number;
     isSuccessful: boolean;
     daysSinceLastCompletion: number;
   }> {
-    const client = await pool.connect();
+    const tasks = await prisma.task.findMany({
+      where: { id: taskId, task_type: TaskType.HABIT }
+    });
 
-    try {
-      await client.query('BEGIN');
-
-      // 獲取習慣任務詳細信息
-      const taskResult = await client.query(
-        'SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
-        [taskId, userId, 'HABIT']
-      );
-
-      if (taskResult.rows.length === 0) {
-        throw new Error('Habit task not found');
-      }
-
-      const habitTask = taskResult.rows[0] as HabitTask;
-
-      // 記錄完成
-      const completionId = ulid();
-      await client.query(
-        'INSERT INTO habit_completions (id, task_id) VALUES ($1, $2)',
-        [completionId, taskId]
-      );
-
-      // 更新最後完成時間
-      await client.query(
-        'UPDATE tasks SET last_completion_time = NOW() WHERE id = $1',
-        [taskId]
-      );
-
-      // 清理舊記錄 (超出時間範圍的記錄)
-      await this.cleanOldCompletions(client, taskId, habitTask);
-
-      // 計算統計數據
-      const completionCount = await this.getCompletionCountInTimeRange(
-        client,
-        taskId,
-        habitTask.time_range_value,
-        habitTask.time_range_type
-      );
-
-      const isSuccessful = this.evaluateHabitSuccess(
-        completionCount,
-        habitTask.threshold_count,
-        habitTask.habit_type
-      );
-
-      const daysSinceLastCompletion = await this.getDaysSinceLastCompletion(
-        client,
-        taskId
-      );
-
-      await client.query('COMMIT');
-
-      // 返回更新後的任務和統計
-      const updatedTaskResult = await client.query(
-        'SELECT * FROM tasks WHERE id = $1',
-        [taskId]
-      );
-
-      return {
-        task: updatedTaskResult.rows[0],
-        completionCount,
-        isSuccessful,
-        daysSinceLastCompletion
-      };
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+    if (tasks.length === 0) {
+      throw new Error(ErrorType.NOT_FOUND);
     }
+
+    const habitTask = tasks[0] as HabitTask;
+
+    const completionId = ulid();
+    await prisma.habitCompletion.create({
+      data: { id: completionId, task_id: taskId }
+    });
+
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: { last_completion_time: new Date() }
+    });
+
+    await this.cleanOldCompletions(taskId, habitTask);
+
+    const completionCount = await this.getCompletionCountInTimeRange(
+      taskId,
+      habitTask.time_range_value,
+      habitTask.time_range_type || TimeRangeType.DAYS
+    );
+
+    const isSuccessful = this.evaluateHabitSuccess(
+      completionCount,
+      habitTask.threshold_count,
+      habitTask.habit_type
+    );
+
+    const daysSinceLastCompletion = await this.getDaysSinceLastCompletion(
+      taskId
+    );
+
+    return {
+      task: updatedTask as HabitTask,
+      completionCount,
+      isSuccessful,
+      daysSinceLastCompletion
+    };
   }
 
   /**
-   * 清理超出時間範圍的舊完成記錄
+   * Clean old completion records that are out of time range
    */
   private static async cleanOldCompletions(
-    client: any,
     taskId: string,
     habitTask: HabitTask
   ): Promise<void> {
     const timeRangeStart = this.calculateTimeRangeStart(
       habitTask.time_range_value,
-      habitTask.time_range_type
+      habitTask.time_range_type || TimeRangeType.DAYS
     );
 
-    await client.query(
-      'DELETE FROM habit_completions WHERE task_id = $1 AND completed_at < $2',
-      [taskId, timeRangeStart]
-    );
+    await prisma.habitCompletion.deleteMany({
+      where: { task_id: taskId, completed_at: { lt: timeRangeStart } }
+    });
   }
 
   /**
-   * 計算時間範圍的開始時間
+   * Calculate the start time of the time range
    */
   private static calculateTimeRangeStart(
     timeRangeValue: number,
@@ -127,33 +106,31 @@ export class HabitService {
         startTime.setMonth(now.getMonth() - timeRangeValue);
         break;
       default:
-        throw new Error(`Unsupported time range type: ${timeRangeType}`);
+        throw new Error(ErrorType.BAD_REQUEST);
     }
 
     return startTime;
   }
 
   /**
-   * 獲取指定時間範圍內的完成次數
+   * Get the number of completions in the specified time range
    */
   static async getCompletionCountInTimeRange(
-    client: any,
     taskId: string,
     timeRangeValue: number,
     timeRangeType: TimeRangeType
   ): Promise<number> {
     const timeRangeStart = this.calculateTimeRangeStart(timeRangeValue, timeRangeType);
 
-    const result = await client.query(
-      'SELECT COUNT(*) FROM habit_completions WHERE task_id = $1 AND completed_at >= $2',
-      [taskId, timeRangeStart]
-    );
+    const result = await prisma.habitCompletion.count({
+      where: { task_id: taskId, completed_at: { gte: timeRangeStart } }
+    });
 
-    return parseInt(result.rows[0].count, 10);
+    return result;
   }
 
   /**
-   * 評估習慣是否成功
+   * Evaluate if the habit is successful
    */
   private static evaluateHabitSuccess(
     completionCount: number,
@@ -162,10 +139,8 @@ export class HabitService {
   ): boolean {
     switch (habitType) {
       case HabitType.GOOD:
-        // 好習慣：完成次數 >= 目標次數
         return completionCount >= thresholdCount;
       case HabitType.BAD:
-        // 壞習慣：完成次數 <= 目標次數
         return completionCount <= thresholdCount;
       default:
         return false;
@@ -173,169 +148,136 @@ export class HabitService {
   }
 
   /**
-   * 計算距離上次完成的天數
+   * Calculate the number of days since the last completion
    */
   private static async getDaysSinceLastCompletion(
-    client: any,
     taskId: string
   ): Promise<number> {
-    const result = await client.query(
-      `SELECT EXTRACT(EPOCH FROM NOW() - MAX(completed_at)) / 86400 as days
-       FROM habit_completions 
-       WHERE task_id = $1`,
-      [taskId]
-    );
+    const result = await prisma.habitCompletion.findFirst({
+      where: { task_id: taskId },
+      orderBy: { completed_at: 'desc' }
+    });
 
-    if (result.rows[0].days === null) {
-      return -1; // 從未完成
+    if (result === null) {
+      return -1; // Never completed
     }
 
-    return Math.floor(result.rows[0].days);
+    return moment(result.completed_at).diff(moment(), 'days');
   }
 
   /**
-   * 獲取習慣統計信息
+   * Get the habit statistics
    */
-  static async getHabitStatistics(taskId: string, userId: string): Promise<{
+  static async getHabitStatistics(taskId: string): Promise<{
     completionCount: number;
     completionRate: number;
     isSuccessful: boolean;
     daysSinceLastCompletion: number;
     completionHistory: Array<{ date: Date; count: number }>;
   }> {
-    const client = await pool.connect();
 
-    try {
-      // 獲取習慣任務信息
-      const taskResult = await client.query(
-        'SELECT * FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
-        [taskId, userId, 'HABIT']
-      );
+    const tasks = await prisma.task.findMany({
+      where: { id: taskId, task_type: TaskType.HABIT }
+    });
 
-      if (taskResult.rows.length === 0) {
-        throw new Error('Habit task not found');
-      }
-
-      const habitTask = taskResult.rows[0] as HabitTask;
-
-      // 計算當前時間範圍內的完成次數
-      const completionCount = await this.getCompletionCountInTimeRange(
-        client,
-        taskId,
-        habitTask.time_range_value,
-        habitTask.time_range_type
-      );
-
-      // 計算完成率
-      const completionRate = habitTask.threshold_count > 0 
-        ? (completionCount / habitTask.threshold_count) * 100 
-        : 0;
-
-      // 評估是否成功
-      const isSuccessful = this.evaluateHabitSuccess(
-        completionCount,
-        habitTask.threshold_count,
-        habitTask.habit_type
-      );
-
-      // 計算距離上次完成天數
-      const daysSinceLastCompletion = await this.getDaysSinceLastCompletion(
-        client,
-        taskId
-      );
-
-      // 獲取最近30天的完成歷史 (按日統計)
-      const historyResult = await client.query(
-        `SELECT DATE(completed_at) as completion_at, COUNT(*) as count
-         FROM habit_completions 
-         WHERE task_id = $1 
-           AND completed_at >= NOW() - INTERVAL '30 days'
-         GROUP BY DATE(completed_at)
-         ORDER BY completion_at DESC`,
-        [taskId]
-      );
-
-      const completionHistory = historyResult.rows.map(row => ({
-        date: new Date(row.completion_at),
-        count: parseInt(row.count, 10)
-      }));
-
-      return {
-        completionCount,
-        completionRate: Math.round(completionRate * 100) / 100,
-        isSuccessful,
-        daysSinceLastCompletion,
-        completionHistory
-      };
-
-    } finally {
-      client.release();
+    if (tasks.length === 0) {
+      throw new Error(ErrorType.NOT_FOUND);
     }
+
+    const habitTask = tasks[0] as HabitTask;
+
+    const completionCount = await this.getCompletionCountInTimeRange(
+      taskId,
+      habitTask.time_range_value,
+      habitTask.time_range_type || TimeRangeType.DAYS
+    );
+
+    const completionRate = habitTask.threshold_count > 0 
+      ? (completionCount / habitTask.threshold_count) * 100 
+      : 0;
+
+    const isSuccessful = this.evaluateHabitSuccess(
+      completionCount,
+      habitTask.threshold_count,
+      habitTask.habit_type
+    );
+
+    const daysSinceLastCompletion = await this.getDaysSinceLastCompletion(
+      taskId
+    );
+
+    const history = await prisma.habitCompletion.findMany({
+      where: { task_id: taskId, completed_at: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } },
+      orderBy: { completed_at: 'desc' }
+    });
+
+    const completionMap = new Map();
+    history.forEach((record: { completed_at: Date }) => {
+      completionMap.set(record.completed_at, record.completed_at);
+    });
+
+    const completionHistory = history.map(record => ({
+      date: record.completed_at,
+      count: completionMap.get(record.completed_at) || 0
+    }));
+
+    return {
+      completionCount,
+      completionRate: Math.round(completionRate * 100) / 100,
+      isSuccessful,
+      daysSinceLastCompletion,
+      completionHistory
+    };
   }
 
   /**
-   * 獲取習慣的所有完成記錄 (用於管理頁面)
+   * Get all habit completion records (for management page)
    */
   static async getHabitCompletionHistory(
     taskId: string, 
-    userId: string,
-    limit: number = 50
+    take: number = 50
   ): Promise<Array<{ id: string; completed_at: Date }>> {
-    // 驗證用戶擁有該任務
-    const taskResult = await pool.query(
-      'SELECT 1 FROM tasks WHERE id = $1 AND user_id = $2 AND task_type = $3',
-      [taskId, userId, 'HABIT']
-    );
 
-    if (taskResult.rows.length === 0) {
-      throw new Error('Habit task not found');
+    const tasks = await prisma.task.findMany({
+      where: { id: taskId, task_type: TaskType.HABIT }
+    });
+
+    if (tasks.length === 0) {
+      throw new Error(ErrorType.NOT_FOUND);
     }
 
-    const result = await pool.query(
-      `SELECT id, completed_at 
-       FROM habit_completions 
-       WHERE task_id = $1 
-       ORDER BY completed_at DESC 
-       LIMIT $2`,
-      [taskId, limit]
-    );
+    const result = await prisma.habitCompletion.findMany({
+      where: { task_id: taskId },
+      orderBy: { completed_at: 'desc' },
+      take
+    });
 
-    return result.rows;
+    return result;
   }
-
+  
   /**
-   * 定期清理所有習慣任務的舊記錄 (可用於定時任務)
+   * Clean all old habit completion records (for scheduled task)
    */
   static async cleanAllOldHabitCompletions(): Promise<number> {
-    const client = await pool.connect();
+    const habits = await prisma.task.findMany({
+      where: { task_type: TaskType.HABIT }
+    });
 
-    try {
-      // 獲取所有習慣任務
-      const habitsResult = await client.query(
-        'SELECT id, time_range_value, time_range_type FROM tasks WHERE task_type = $1',
-        ['HABIT']
+    let totalCleaned = 0;
+
+    for (const habit of habits) {
+      const timeRangeStart = this.calculateTimeRangeStart(
+        habit.time_range_value || 0,
+        habit.time_range_type || TimeRangeType.DAYS
       );
 
-      let totalCleaned = 0;
+      const result = await prisma.habitCompletion.deleteMany({
+        where: { task_id: habit.id, completed_at: { lt: timeRangeStart } }
+      });
 
-      for (const habit of habitsResult.rows) {
-        const timeRangeStart = this.calculateTimeRangeStart(
-          habit.time_range_value,
-          habit.time_range_type
-        );
-
-        const deleteResult = await client.query(
-          'DELETE FROM habit_completions WHERE task_id = $1 AND completed_at < $2',
-          [habit.id, timeRangeStart]
-        );
-
-        totalCleaned += deleteResult.rowCount || 0;
-      }
-
-      return totalCleaned;
-
-    } finally {
-      client.release();
+      totalCleaned += result.count || 0;
     }
+
+    return totalCleaned;
   }
 }

@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from './prisma';
-import { User } from '../models/user';
+import { User } from '../generated/prisma';
 import Env from '../config/env';
+import { ErrorType } from './messages.enum';
 
 export interface AuthRequest extends Request {
   user?: User;
@@ -13,7 +14,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    res.status(401).json({ error: 'Access token required' });
+    res.status(401).json({ error: ErrorType.UNAUTHORIZED });
     return;
   }
 
@@ -26,14 +27,14 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
     });
     
     if (!user) {
-      res.status(403).json({ error: 'Invalid token' });
+      res.status(403).json({ error: ErrorType.INVALID_TOKEN });
       return;
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(403).json({ error: 'Invalid token' });
+    res.status(403).json({ error: ErrorType.INVALID_TOKEN });
     return;
   }
 };

@@ -8,6 +8,7 @@ import { TaskService } from '../services/taskService';
 import { TodoService } from '../services/todoService';
 import { AuthRequest } from '../utils/auth';
 import logger from '../utils/logger';
+import { ErrorType, SuccessMessage } from '../utils/messages.enum';
 
 const createTaskSchema = z.object({
     title: z.string().min(1).max(255),
@@ -37,11 +38,14 @@ const createTaskSchema = z.object({
 const taskController = {
     getTasks: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const tasks = await TaskService.getUserTasks(req.user!.id);
+            const filter = req.query.filter as object;
+            const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
+            const take = req.query.take ? parseInt(req.query.take as string) : 100;
+            const tasks = await TaskService.getUserTasks(req.user!.id, filter, skip, take);
             res.json({ tasks });
         } catch (error) {
-            logger.error('Get tasks error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     getTaskById: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -49,8 +53,8 @@ const taskController = {
             const task = await TaskService.getTaskById(req.params.id, req.user!.id);
             res.json({ task });
         } catch (error) {
-            logger.error('Get task error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     createTask: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -59,8 +63,8 @@ const taskController = {
             const task = await TaskService.createTask(req.user!.id, validatedData);
             res.status(201).json({ task });
         } catch (error) {
-            logger.error('Create task error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     updateTask: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -70,17 +74,17 @@ const taskController = {
             const task = await TaskService.updateTask(req.params.id, req.user!.id, updates);
             res.json({ task });
         } catch (error) {
-            logger.error('Update task error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     deleteTask: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
             await TaskService.deleteTask(req.params.id, req.user!.id);
-            res.json({ message: 'Task deleted successfully' });
+            res.json({ message: SuccessMessage.TASK_DELETED });
         } catch (error) {
-            logger.error('Delete task error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     toggleTaskCompletion: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -88,62 +92,62 @@ const taskController = {
             const task = await TaskService.toggleTaskCompletion(req.params.id, req.user!.id);
             res.json({ task });
         } catch (error) {
-            logger.error('Toggle task error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     getHabitStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const stats = await HabitService.getHabitStatistics(req.params.id, req.user!.id);
+            const stats = await HabitService.getHabitStatistics(req.params.id);
             res.json({ stats });
         } catch (error) {
-            logger.error('Get habit stats error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     getHabitHistory: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const history = await HabitService.getHabitCompletionHistory(req.params.id, req.user!.id, req.query.limit ? parseInt(req.query.limit as string) : 50);
+            const history = await HabitService.getHabitCompletionHistory(req.params.id, req.query.limit ? parseInt(req.query.limit as string) : 50);
             res.json({ history });
         } catch (error) {
-            logger.error('Get habit history error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     getDailyTaskStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const stats = await DailyTaskService.getDailyTaskStatistics(req.params.id, req.user!.id);
+            const stats = await DailyTaskService.getDailyTaskStatistics(req.params.id);
             res.json({ stats });
         } catch (error) {
-            logger.error('Get daily task stats error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     processDailyReset: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
             const result = await DailyTaskService.processDailyReset();
-            res.json({ message: 'Daily reset completed', ...result });
+            res.json({ message: SuccessMessage.DAILY_RESET_COMPLETED, ...result });
         } catch (error) {
-            logger.error('Daily reset error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     getLongTermTaskStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const stats = await MilestoneService.getLongTermTaskStatistics(req.params.id, req.user!.id);
+            const stats = await MilestoneService.getLongTermTaskStatistics(req.params.id);
             res.json({ stats });
         } catch (error) {
-            logger.error('Get long-term task stats error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     getTaskMilestones: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const milestones = await MilestoneService.getTaskMilestones(req.params.id, req.user!.id);
+            const milestones = await MilestoneService.getTaskMilestones(req.params.id);
             res.json({ milestones });
         } catch (error) {
-            logger.error('Get milestones error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     createMilestone: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -154,22 +158,22 @@ const taskController = {
                 order_index: z.number().int().min(0).default(0)
             });
             const validatedData = createMilestoneSchema.parse(req.body);
-            const milestone = await MilestoneService.createMilestone(req.params.id, req.user!.id, validatedData);
+            const milestone = await MilestoneService.createMilestone(req.params.id, validatedData);
             res.status(201).json({ milestone });
         } catch (error) {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ 
-                  error: 'Validation failed', 
+                  error: ErrorType.VALIDATION_ERROR, 
                   details: error.errors 
                 });
             }
               
-            if (error instanceof Error && error.message === 'Long-term task not found') {
-                res.status(404).json({ error: 'Long-term task not found' });
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
             }
               
-            logger.error('Create milestone error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     updateMilestone: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -180,29 +184,29 @@ const taskController = {
                 order_index: z.number().int().min(0).optional()
             });
             const validatedData = updateMilestoneSchema.parse(req.body);
-            const milestone = await MilestoneService.updateMilestone(req.params.id, req.user!.id, validatedData);
+            const milestone = await MilestoneService.updateMilestone(req.params.id, validatedData);
             res.json({ milestone });
         } catch (error) {
-            logger.error('Update milestone error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     toggleMilestoneCompletion: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const result = await MilestoneService.toggleMilestoneCompletion(req.params.id, req.user!.id);
+            const result = await MilestoneService.toggleMilestoneCompletion(req.params.id);
             res.json({ result });
         } catch (error) {
-            logger.error('Toggle milestone completion error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     deleteMilestone: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            await MilestoneService.deleteMilestone(req.params.id, req.user!.id);
-            res.json({ message: 'Milestone deleted successfully' });
+            await MilestoneService.deleteMilestone(req.params.id);
+            res.json({ message: SuccessMessage.MILESTONE_DELETED });
         } catch (error) {
-            logger.error('Delete milestone error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     reorderMilestones: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -214,20 +218,11 @@ const taskController = {
                 }))
             });
             const validatedData = reorderSchema.parse(req.body);
-            await MilestoneService.reorderMilestones(req.params.id, req.user!.id, validatedData.milestoneOrders);
-            res.json({ message: 'Milestones reordered successfully' });
+            await MilestoneService.reorderMilestones(req.params.id, validatedData.milestoneOrders);
+            res.json({ message: SuccessMessage.MILESTONE_REORDERED });
         } catch (error) {
-            logger.error('Reorder milestones error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-    getTodoTaskStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const stats = await TodoService.getTodoTaskStatistics(req.params.id, req.user!.id);
-            res.json({ stats });
-        } catch (error) {
-            logger.error('Get TODO stats error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     getOverdueTasks: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -235,8 +230,8 @@ const taskController = {
             const tasks = await TodoService.getOverdueTasks(req.user!.id);
             res.json({ tasks });
         } catch (error) {
-            logger.error('Get overdue tasks error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     getUpcomingTasks: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -245,44 +240,20 @@ const taskController = {
             const tasks = await TodoService.getUpcomingTasks(req.user!.id, days);
             res.json({ tasks });
         } catch (error) {
-            logger.error('Get upcoming tasks error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-    updateTaskDueDate: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const dueDateSchema = z.object({
-                due_at: z.string().datetime().nullable()
-            });
-            const validatedData = dueDateSchema.parse(req.body);
-            const dueDate = validatedData.due_at ? new Date(validatedData.due_at) : null;
-            const task = await TodoService.updateTaskDueDate(req.params.id, req.user!.id, dueDate);
-            res.json({ task });
-        } catch (error) {
-            logger.error('Update task due date error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    },
-    getTodoCompletionStats: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const days = req.query.days ? parseInt(req.query.days as string) : 30;
-            const stats = await TodoService.getTodoCompletionStats(req.user!.id, days);
-            res.json({ stats });
-        } catch (error) {
-            logger.error('Get TODO completion stats error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     updateOverdueTasks: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
             const result = await TodoService.updateOverdueTasks();
             res.json({
-                message: 'Overdue tasks updated',
+                message: SuccessMessage.OVERDUE_TASKS_UPDATED,
                 ...result
             });
         } catch (error) {
-            logger.error('Update overdue tasks error:', error);
-            res.status(500).json({ error: 'Internal server error' });
+            logger.error(error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     }
 }

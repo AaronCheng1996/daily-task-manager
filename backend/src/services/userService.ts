@@ -1,50 +1,32 @@
 import bcrypt from 'bcrypt';
-import { ulid } from 'ulid';
 import { prisma } from '../utils/prisma';
-import { User } from '../models/user';
+import { User } from '../generated/prisma';
 import { generateToken } from '../utils/auth';
+import { ulid } from 'ulid';
+import { ErrorType } from '../utils/messages.enum';
 
 const SALT_ROUNDS = 12;
 
 export class UserService {
   static async register(username: string, email: string, password: string): Promise<{ user: Omit<User, 'password_hash'>, token: string }> {
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { username },
-          { email }
-        ]
-      }
-    });
+    try {
+      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    if (existingUser) {
-      throw new Error('User already exists');
+      const user = await prisma.user.create({
+        data: {
+          id: ulid(),
+          username,
+          email,
+          password_hash: passwordHash
+        }
+      });
+
+      const token = generateToken(user.id);
+
+      return { user, token };
+    } catch (error) {
+      throw error;
     }
-
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-    const userId = ulid();
-    const user = await prisma.user.create({
-      data: {
-        id: userId,
-        username,
-        email,
-        password_hash: passwordHash
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        preferred_language: true,
-        points: true,
-        timezone: true,
-        created_at: true,
-        updated_at: true
-      }
-    });
-
-    const token = generateToken(user.id);
-    return { user, token };
   }
 
   static async login(usernameOrEmail: string, password: string): Promise<{ user: Omit<User, 'password_hash'>, token: string }> {
@@ -58,12 +40,12 @@ export class UserService {
     });
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new Error(ErrorType.INVALID_CREDENTIALS);
     }
 
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
-      throw new Error('Invalid credentials');
+      throw new Error(ErrorType.INVALID_CREDENTIALS);
     }
 
     const token = generateToken(user.id);
@@ -96,24 +78,28 @@ export class UserService {
     );
 
     if (Object.keys(validUpdates).length === 0) {
-      throw new Error('No valid updates provided');
+      throw new Error(ErrorType.NO_VALID_UPDATES_PROVIDED);
     }
 
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: validUpdates,
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        preferred_language: true,
-        points: true,
-        timezone: true,
-        created_at: true,
-        updated_at: true
-      }
-    });
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: validUpdates,
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          preferred_language: true,
+          points: true,
+          timezone: true,
+          created_at: true,
+          updated_at: true
+        }
+      });
 
-    return user;
+      return updatedUser as Omit<User, 'password_hash'>;
+    } catch (error) {
+      throw error;
+    }
   }
 }

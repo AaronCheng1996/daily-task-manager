@@ -97,3 +97,4 @@ VITE_API_URL=http://localhost:3001/api
 - Change Task's background color and disable Done button if the Daily Task is not triggered Today. also make two toggle button that filter triggered and Completed Task on the page instead of using different Pages
 - Reward point system
 - auto database init (for existing database)
+- reset password
