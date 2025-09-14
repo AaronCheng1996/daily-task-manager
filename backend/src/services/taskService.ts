@@ -1,9 +1,9 @@
-import { prisma } from '../utils/prisma';
-import { TaskType, Task } from '../generated/prisma';
-import { HabitService } from './habitService';
-import { DailyTaskService } from './dailyTaskService';
 import { ulid } from 'ulid';
+import { Task, TaskType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
+import { prisma } from '../utils/prisma';
+import { DailyTaskService } from './dailyTaskService';
+import { HabitService } from './habitService';
 
 let lastTaskOrderIndex = 0;
 

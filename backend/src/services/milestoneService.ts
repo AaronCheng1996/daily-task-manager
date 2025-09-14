@@ -1,15 +1,8 @@
-import { ulid } from 'ulid';
-import { prisma } from '../utils/prisma';
-import { Task, Milestone, TaskType } from '../generated/prisma';
 import moment from 'moment';
-import { Decimal } from '@prisma/client/runtime/library';
+import { ulid } from 'ulid';
+import { Milestone, TaskType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
-
-interface LongTermTask extends Task {
-  progress: Decimal;
-  is_completed: boolean;
-  target_completion_at: Date;
-}
+import { prisma } from '../utils/prisma';
 
 export class MilestoneService {
   /**

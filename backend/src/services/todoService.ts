@@ -1,6 +1,6 @@
+import moment from 'moment';
 import { Task } from '../generated/prisma';
 import { prisma } from '../utils/prisma';
-import moment from 'moment';
 
 interface TodoTask extends Task {
   due_at: Date;

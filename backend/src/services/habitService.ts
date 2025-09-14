@@ -1,8 +1,8 @@
-import { ulid } from 'ulid';
-import { Task, TimeRangeType, HabitType, TaskType } from '../generated/prisma';
-import { prisma } from '../utils/prisma';
 import moment from 'moment';
+import { ulid } from 'ulid';
+import { HabitType, Task, TaskType, TimeRangeType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
+import { prisma } from '../utils/prisma';
 
 interface HabitTask extends Task {
   habit_type: HabitType;

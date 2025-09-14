@@ -1,6 +1,5 @@
-// Database configuration using Prisma
-import { prisma } from '../utils/prisma';
 import logger from '../utils/logger';
+import { prisma } from '../utils/prisma';
 
 export const initDatabase = async () => {
   try {
@@ -13,3 +12,4 @@ export const initDatabase = async () => {
 };
 
 export { prisma };
+

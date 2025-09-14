@@ -1,15 +1,15 @@
-import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import moment from 'moment';
+import morgan from 'morgan';
 
 import { initDatabase } from './config/database';
+import Env from './config/env';
 import { initRedis } from './config/redis';
 import router from './route';
-import Env from './config/env';
 import logger from './utils/logger';
 
 dotenv.config();

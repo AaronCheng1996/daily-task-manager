@@ -1,9 +1,9 @@
 import bcrypt from 'bcrypt';
-import { prisma } from '../utils/prisma';
+import { ulid } from 'ulid';
 import { User } from '../generated/prisma';
 import { generateToken } from '../utils/auth';
-import { ulid } from 'ulid';
 import { ErrorType } from '../utils/messages.enum';
+import { prisma } from '../utils/prisma';
 
 const SALT_ROUNDS = 12;
 

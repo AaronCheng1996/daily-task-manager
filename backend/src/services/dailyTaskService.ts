@@ -1,8 +1,8 @@
-import { ulid } from 'ulid';
-import { Task, RecurrenceType, TaskType } from '../generated/prisma';
-import { prisma } from '../utils/prisma';
 import moment from 'moment';
+import { ulid } from 'ulid';
+import { RecurrenceType, Task, TaskType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
+import { prisma } from '../utils/prisma';
 
 interface DailyTask extends Task {
   started_at: Date | null;

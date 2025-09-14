@@ -10,7 +10,6 @@ services:
       POSTGRES_PASSWORD: taskpass
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
