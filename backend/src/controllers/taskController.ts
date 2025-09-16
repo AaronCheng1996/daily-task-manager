@@ -44,6 +44,19 @@ const taskController = {
             const tasks = await TaskService.getUserTasks(req.user!.id, filter, skip, take);
             res.json({ tasks });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -53,6 +66,19 @@ const taskController = {
             const task = await TaskService.getTaskById(req.params.id, req.user!.id);
             res.json({ task });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -63,6 +89,19 @@ const taskController = {
             const task = await TaskService.createTask(req.user!.id, validatedData);
             res.status(201).json({ task });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -74,6 +113,19 @@ const taskController = {
             const task = await TaskService.updateTask(req.params.id, req.user!.id, updates);
             res.json({ task });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -83,6 +135,19 @@ const taskController = {
             await TaskService.deleteTask(req.params.id, req.user!.id);
             res.json({ message: SuccessMessage.TASK_DELETED });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -92,6 +157,19 @@ const taskController = {
             const task = await TaskService.toggleTaskCompletion(req.params.id, req.user!.id);
             res.json({ task });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -101,6 +179,19 @@ const taskController = {
             const stats = await HabitService.getHabitStatistics(req.params.id);
             res.json({ stats });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -119,6 +210,19 @@ const taskController = {
             const stats = await DailyTaskService.getDailyTaskStatistics(req.params.id);
             res.json({ stats });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -128,6 +232,19 @@ const taskController = {
             const result = await DailyTaskService.processDailyReset();
             res.json({ message: SuccessMessage.DAILY_RESET_COMPLETED, ...result });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -137,6 +254,19 @@ const taskController = {
             const stats = await MilestoneService.getLongTermTaskStatistics(req.params.id);
             res.json({ stats });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -146,6 +276,19 @@ const taskController = {
             const milestones = await MilestoneService.getTaskMilestones(req.params.id);
             res.json({ milestones });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -166,10 +309,12 @@ const taskController = {
                   error: ErrorType.VALIDATION_ERROR, 
                   details: error.errors 
                 });
+                return;
             }
               
             if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
                 res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
             }
               
             logger.error(error);
@@ -187,6 +332,19 @@ const taskController = {
             const milestone = await MilestoneService.updateMilestone(req.params.id, validatedData);
             res.json({ milestone });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -196,6 +354,19 @@ const taskController = {
             const result = await MilestoneService.toggleMilestoneCompletion(req.params.id);
             res.json({ result });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -205,6 +376,19 @@ const taskController = {
             await MilestoneService.deleteMilestone(req.params.id);
             res.json({ message: SuccessMessage.MILESTONE_DELETED });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -221,6 +405,19 @@ const taskController = {
             await MilestoneService.reorderMilestones(req.params.id, validatedData.milestoneOrders);
             res.json({ message: SuccessMessage.MILESTONE_REORDERED });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -230,6 +427,19 @@ const taskController = {
             const tasks = await TodoService.getOverdueTasks(req.user!.id);
             res.json({ tasks });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -240,6 +450,19 @@ const taskController = {
             const tasks = await TodoService.getUpcomingTasks(req.user!.id, days);
             res.json({ tasks });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
@@ -252,6 +475,19 @@ const taskController = {
                 ...result
             });
         } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+              
+            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }

@@ -42,7 +42,6 @@ const router = createRouter({
   ]
 })
 
-// Navigation guard
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   

@@ -28,7 +28,6 @@ import { useUserStore } from '@/stores/userStore'
 const userStore = useUserStore()
 
 onMounted(() => {
-  // Try to restore user session from localStorage
   userStore.restoreSession()
 })
 </script>

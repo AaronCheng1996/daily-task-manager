@@ -46,22 +46,22 @@ api.interceptors.response.use(
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<ApiResponse> => {
-    const response = await api.post('/auth/login', credentials)
+    const response = await api.post('/login', credentials)
     return response.data
   },
 
   register: async (data: RegisterData): Promise<ApiResponse> => {
-    const response = await api.post('/auth/register', data)
+    const response = await api.post('/register', data)
     return response.data
   },
 
   getProfile: async (): Promise<ApiResponse> => {
-    const response = await api.get('/auth/profile')
+    const response = await api.get('/profile')
     return response.data
   },
 
   updateProfile: async (updates: Partial<User>): Promise<ApiResponse> => {
-    const response = await api.patch('/auth/profile', updates)
+    const response = await api.patch('/profile', updates)
     return response.data
   },
 }
@@ -115,13 +115,13 @@ export const taskApi = {
   },
 
   processDailyReset: async (): Promise<ApiResponse> => {
-    const response = await api.post('/tasks/daily-reset')
+    const response = await api.post('/tasks/update-overdue')
     return response.data
   },
 
   // Long-term task specific APIs
   getLongTermTaskStatistics: async (id: string): Promise<ApiResponse & { stats: LongTermTaskStatistics }> => {
-    const response = await api.get(`/tasks/${id}/longterm-stats`)
+    const response = await api.get(`/tasks/${id}/long-term-stats`)
     return response.data
   },
 
@@ -140,22 +140,22 @@ export const taskApi = {
     return response.data
   },
 
-  updateMilestone: async (milestoneId: string, updates: {
+  updateMilestone: async (taskId: string, milestoneId: string, updates: {
     title?: string;
     description?: string;
     order_index?: number;
   }): Promise<ApiResponse & { milestone: Milestone }> => {
-    const response = await api.patch(`/tasks/milestones/${milestoneId}`, updates)
+    const response = await api.patch(`/tasks/${taskId}/milestones/${milestoneId}`, updates)
     return response.data
   },
 
-  toggleMilestoneCompletion: async (milestoneId: string): Promise<ApiResponse> => {
-    const response = await api.post(`/tasks/milestones/${milestoneId}/toggle`)
+  toggleMilestoneCompletion: async (taskId: string, milestoneId: string): Promise<ApiResponse> => {
+    const response = await api.post(`/tasks/${taskId}/milestones/${milestoneId}/toggle`)
     return response.data
   },
 
-  deleteMilestone: async (milestoneId: string): Promise<ApiResponse> => {
-    const response = await api.delete(`/tasks/milestones/${milestoneId}`)
+  deleteMilestone: async (taskId: string, milestoneId: string): Promise<ApiResponse> => {
+    const response = await api.delete(`/tasks/${taskId}/milestones/${milestoneId}`)
     return response.data
   },
 

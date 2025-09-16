@@ -30,14 +30,16 @@ const userController = {
             });
         } catch (error) {
             if (error instanceof z.ZodError) {
-            res.status(400).json({ 
-                error: ErrorType.VALIDATION_ERROR, 
-                details: error.errors 
-            });
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
             }
             
             if (error instanceof Error && error.message === ErrorType.USER_ALREADY_EXISTS) {
-            res.status(409).json({ error: ErrorType.USER_ALREADY_EXISTS });
+                res.status(409).json({ error: ErrorType.USER_ALREADY_EXISTS });
+                return;
             }
             
             logger.error('Registration error:', error);
@@ -58,14 +60,16 @@ const userController = {
             });
         } catch (error) {
             if (error instanceof z.ZodError) {
-            res.status(400).json({ 
-                error: ErrorType.VALIDATION_ERROR, 
-                details: error.errors 
-            });
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
             }
             
             if (error instanceof Error && error.message === ErrorType.INVALID_CREDENTIALS) {
-            res.status(401).json({ error: ErrorType.INVALID_CREDENTIALS });
+                res.status(401).json({ error: ErrorType.INVALID_CREDENTIALS });
+                return;
             }
             
             logger.error('Login error:', error);
@@ -95,10 +99,11 @@ const userController = {
             });
         } catch (error) {
             if (error instanceof z.ZodError) {
-            res.status(400).json({ 
-                error: ErrorType.VALIDATION_ERROR, 
-                details: error.errors 
-            });
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
             }
             
             logger.error('Profile update error:', error);
