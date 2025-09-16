@@ -4,6 +4,7 @@ import { ErrorType } from '../utils/messages.enum';
 import { prisma } from '../utils/prisma';
 import { DailyTaskService } from './dailyTaskService';
 import { HabitService } from './habitService';
+import { MilestoneService } from './milestoneService';
 
 let lastTaskOrderIndex = 0;
 
@@ -96,13 +97,13 @@ export class TaskService {
       }
       
       if (task.task_type === TaskType.HABIT) {
-        const habitResult = await HabitService.recordHabitCompletion(taskId);
+        const habitResult = await HabitService.recordHabitCompletion(task);
         return habitResult.task as Task;
       }
       
       if (task.task_type === TaskType.DAILY_TASK) {
         const targetDate = new Date();
-        const dailyResult = await DailyTaskService.toggleDailyTaskCompletion(taskId, targetDate);
+        const dailyResult = await DailyTaskService.toggleDailyTaskCompletion(task, targetDate);
         return dailyResult.task as Task;
       }
       
@@ -117,13 +118,25 @@ export class TaskService {
       
       const updatedTask = await tx.task.update({
         where: {
-          id: taskId
+          id: task.id
         },
         data: updateData
       });
       
       return updatedTask as Task;
     });
+  }
+
+  static async getTaskStatistics(task: Task): Promise<any> {
+    if (task.task_type === TaskType.HABIT) {
+      return HabitService.getHabitStatistics(task);
+    }
+    if (task.task_type === TaskType.DAILY_TASK) {
+      return DailyTaskService.getDailyTaskStatistics(task);
+    }
+    if (task.task_type === TaskType.LONG_TERM) {
+      return MilestoneService.getLongTermTaskStatistics(task);
+    }
   }
 
   private static async getLastTaskOrderIndex(userId: string): Promise<number> {
@@ -133,5 +146,48 @@ export class TaskService {
         select: { order_index: true }
     });
     return task?.order_index ?? 0;
+  }
+
+  static async reorderTasks(taskId: string, prevOrderIndex: number | null, nextOrderIndex: number | null): Promise<void> {
+    let orderIndex = 0;
+    if (prevOrderIndex !== null && nextOrderIndex !== null) {
+      orderIndex = (prevOrderIndex + nextOrderIndex) / 2;
+    } else if (prevOrderIndex !== null) {
+      orderIndex = prevOrderIndex + 1000;
+      if (orderIndex > lastTaskOrderIndex) {
+        lastTaskOrderIndex = orderIndex;
+      }
+    } else if (nextOrderIndex !== null) {
+      orderIndex = nextOrderIndex / 2;
+    } else {
+      throw new Error(ErrorType.BAD_REQUEST);
+    }
+
+    if (orderIndex === prevOrderIndex || orderIndex === nextOrderIndex) {
+      this.reorderAllTasks();
+      return;
+    }
+
+    await prisma.task.update({
+      where: { id: taskId },
+      data: { order_index: orderIndex }
+    });
+  }
+
+  static async reorderAllTasks(): Promise<void> {
+    const tasks = await prisma.task.findMany({
+      orderBy: { order_index: 'asc' }
+    });
+
+    let orderIndex = 0;
+    for (const task of tasks) {
+      orderIndex += 1000;
+      await prisma.task.update({
+        where: { id: task.id },
+        data: { order_index: orderIndex }
+      });
+    }
+    
+    lastTaskOrderIndex = orderIndex;
   }
 }

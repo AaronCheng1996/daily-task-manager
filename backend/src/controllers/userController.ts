@@ -77,6 +77,25 @@ const userController = {
         }
     },
 
+    resetPassword: async (req: AuthRequest, res: Response): Promise<void> => {
+        try {
+            const { oldPassword, newPassword } = z.object({ oldPassword: z.string().min(6), newPassword: z.string().min(6) }).parse(req.body);
+            const updatedUser = await UserService.resetPassword((req as AuthRequest).user!.id, oldPassword, newPassword);
+            res.json({ user: updatedUser });
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                res.status(400).json({ 
+                    error: ErrorType.VALIDATION_ERROR, 
+                    details: error.errors 
+                });
+                return;
+            }
+                
+            logger.error('Reset password error:', error);
+            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
+        }
+    },
+
     getProfile: async (req: AuthRequest, res: Response): Promise<void> => {
         res.json({ user: (req as AuthRequest).user });
     },

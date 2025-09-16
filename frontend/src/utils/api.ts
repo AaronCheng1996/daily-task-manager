@@ -6,7 +6,6 @@ import type {
   RegisterData, 
   ApiResponse,
   HabitStatistics,
-  HabitCompletionRecord,
   DailyTaskStatistics,
   LongTermTaskStatistics,
   Milestone
@@ -103,19 +102,9 @@ export const taskApi = {
     return response.data
   },
 
-  getHabitHistory: async (id: string, limit: number = 50): Promise<ApiResponse & { history: HabitCompletionRecord[] }> => {
-    const response = await api.get(`/tasks/${id}/habit-history?limit=${limit}`)
-    return response.data
-  },
-
   // Daily task specific APIs
   getDailyTaskStatistics: async (id: string): Promise<ApiResponse & { stats: DailyTaskStatistics }> => {
     const response = await api.get(`/tasks/${id}/daily-stats`)
-    return response.data
-  },
-
-  processDailyReset: async (): Promise<ApiResponse> => {
-    const response = await api.post('/tasks/update-overdue')
     return response.data
   },
 
@@ -156,14 +145,6 @@ export const taskApi = {
 
   deleteMilestone: async (taskId: string, milestoneId: string): Promise<ApiResponse> => {
     const response = await api.delete(`/tasks/${taskId}/milestones/${milestoneId}`)
-    return response.data
-  },
-
-  reorderMilestones: async (taskId: string, milestoneOrders: Array<{
-    id: string;
-    order_index: number;
-  }>): Promise<ApiResponse> => {
-    const response = await api.put(`/tasks/${taskId}/milestones/reorder`, { milestoneOrders })
     return response.data
   },
 }

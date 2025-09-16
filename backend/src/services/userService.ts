@@ -54,6 +54,29 @@ export class UserService {
     return { user: userWithoutPassword, token };
   }
 
+  static async resetPassword(userId: string, oldPassword: string, newPassword: string): Promise<Omit<User, 'password_hash'>> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      throw new Error(ErrorType.USER_NOT_FOUND);
+    }
+
+    const validPassword = await bcrypt.compare(oldPassword, user.password_hash);
+    if (!validPassword) {
+      throw new Error(ErrorType.INVALID_CREDENTIALS);
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { password_hash: newPasswordHash }
+    });
+
+    return updatedUser as Omit<User, 'password_hash'>;
+  }
+
   static async getUserById(userId: string): Promise<Omit<User, 'password_hash'> | null> {
     const user = await prisma.user.findUnique({
       where: { id: userId },

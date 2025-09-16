@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { ulid } from 'ulid';
-import { HabitType, Task, TaskType, TimeRangeType } from '../generated/prisma';
+import { HabitType, Task, TimeRangeType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
 import { prisma } from '../utils/prisma';
 
@@ -16,36 +16,28 @@ export class HabitService {
   /**
    * Record habit completion (cannot be undone)
    */
-  static async recordHabitCompletion(taskId: string): Promise<{
+  static async recordHabitCompletion(task: Task): Promise<{
     task: HabitTask;
     completionCount: number;
     isSuccessful: boolean;
     daysSinceLastCompletion: number;
   }> {
-    const tasks = await prisma.task.findMany({
-      where: { id: taskId, task_type: TaskType.HABIT }
-    });
-
-    if (tasks.length === 0) {
-      throw new Error(ErrorType.NOT_FOUND);
-    }
-
-    const habitTask = tasks[0] as HabitTask;
+    const habitTask = task as HabitTask;
 
     const completionId = ulid();
     await prisma.habitCompletion.create({
-      data: { id: completionId, task_id: taskId }
+      data: { id: completionId, task_id: task.id }
     });
 
     const updatedTask = await prisma.task.update({
-      where: { id: taskId },
+      where: { id: task.id },
       data: { last_completion_time: new Date() }
     });
 
-    await this.cleanOldCompletions(taskId, habitTask);
+    await this.cleanOldCompletions(task.id, habitTask);
 
     const completionCount = await this.getCompletionCountInTimeRange(
-      taskId,
+      task.id,
       habitTask.time_range_value,
       habitTask.time_range_type || TimeRangeType.DAYS
     );
@@ -57,7 +49,7 @@ export class HabitService {
     );
 
     const daysSinceLastCompletion = await this.getDaysSinceLastCompletion(
-      taskId
+      task.id
     );
 
     return {
@@ -115,7 +107,7 @@ export class HabitService {
   /**
    * Get the number of completions in the specified time range
    */
-  static async getCompletionCountInTimeRange(
+  private static async getCompletionCountInTimeRange(
     taskId: string,
     timeRangeValue: number,
     timeRangeType: TimeRangeType
@@ -168,26 +160,17 @@ export class HabitService {
   /**
    * Get the habit statistics
    */
-  static async getHabitStatistics(taskId: string): Promise<{
+  static async getHabitStatistics(task: Task): Promise<{
     completionCount: number;
     completionRate: number;
     isSuccessful: boolean;
     daysSinceLastCompletion: number;
     completionHistory: Array<{ date: Date; count: number }>;
   }> {
-
-    const tasks = await prisma.task.findMany({
-      where: { id: taskId, task_type: TaskType.HABIT }
-    });
-
-    if (tasks.length === 0) {
-      throw new Error(ErrorType.NOT_FOUND);
-    }
-
-    const habitTask = tasks[0] as HabitTask;
+    const habitTask = task as HabitTask;
 
     const completionCount = await this.getCompletionCountInTimeRange(
-      taskId,
+      task.id,
       habitTask.time_range_value,
       habitTask.time_range_type || TimeRangeType.DAYS
     );
@@ -203,11 +186,11 @@ export class HabitService {
     );
 
     const daysSinceLastCompletion = await this.getDaysSinceLastCompletion(
-      taskId
+      task.id
     );
 
     const history = await prisma.habitCompletion.findMany({
-      where: { task_id: taskId, completed_at: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } },
+      where: { task_id: task.id, completed_at: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } },
       orderBy: { completed_at: 'desc' }
     });
 
@@ -228,56 +211,5 @@ export class HabitService {
       daysSinceLastCompletion,
       completionHistory
     };
-  }
-
-  /**
-   * Get all habit completion records (for management page)
-   */
-  static async getHabitCompletionHistory(
-    taskId: string, 
-    take: number = 50
-  ): Promise<Array<{ id: string; completed_at: Date }>> {
-
-    const tasks = await prisma.task.findMany({
-      where: { id: taskId, task_type: TaskType.HABIT }
-    });
-
-    if (tasks.length === 0) {
-      throw new Error(ErrorType.NOT_FOUND);
-    }
-
-    const result = await prisma.habitCompletion.findMany({
-      where: { task_id: taskId },
-      orderBy: { completed_at: 'desc' },
-      take
-    });
-
-    return result;
-  }
-  
-  /**
-   * Clean all old habit completion records (for scheduled task)
-   */
-  static async cleanAllOldHabitCompletions(): Promise<number> {
-    const habits = await prisma.task.findMany({
-      where: { task_type: TaskType.HABIT }
-    });
-
-    let totalCleaned = 0;
-
-    for (const habit of habits) {
-      const timeRangeStart = this.calculateTimeRangeStart(
-        habit.time_range_value || 0,
-        habit.time_range_type || TimeRangeType.DAYS
-      );
-
-      const result = await prisma.habitCompletion.deleteMany({
-        where: { task_id: habit.id, completed_at: { lt: timeRangeStart } }
-      });
-
-      totalCleaned += result.count || 0;
-    }
-
-    return totalCleaned;
   }
 }

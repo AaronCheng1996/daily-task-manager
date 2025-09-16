@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { ulid } from 'ulid';
-import { Milestone, TaskType } from '../generated/prisma';
+import { Milestone, Task, TaskType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
 import { prisma } from '../utils/prisma';
 
@@ -175,7 +175,7 @@ export class MilestoneService {
   /**
    * Get the long-term task statistics
    */
-  static async getLongTermTaskStatistics(taskId: string): Promise<{
+  static async getLongTermTaskStatistics(task: Task): Promise<{
     totalMilestones: number;
     completedMilestones: number;
     progress: number;
@@ -186,21 +186,12 @@ export class MilestoneService {
       pending: Milestone[];
     };
   }> {
-
-    const task = await prisma.task.findFirst({
-      where: { id: taskId, task_type: TaskType.LONG_TERM }
-    });
-
-    if (!task) {
-      throw new Error(ErrorType.NOT_FOUND);
-    }
-
     if (task.task_type !== TaskType.LONG_TERM) {
       throw new Error(ErrorType.BAD_REQUEST);
     }
 
     const milestones = await prisma.milestone.findMany({
-      where: { task_id: taskId },
+      where: { task_id: task.id },
       orderBy: { order_index: 'asc', created_at: 'asc' }
     });
 

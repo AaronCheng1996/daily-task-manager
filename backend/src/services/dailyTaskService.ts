@@ -16,7 +16,7 @@ export class DailyTaskService {
   /**
    * Check if the daily task should appear on the specified date
    */
-  static shouldTaskAppearOnDate(task: DailyTask, targetDate: Date): boolean {
+  private static shouldTaskAppearOnDate(task: DailyTask, targetDate: Date): boolean {
     const taskDate = new Date(task.started_at || task.created_at);
     
     if (!task.is_recurring && targetDate > taskDate) {
@@ -86,7 +86,7 @@ export class DailyTaskService {
   /**
    * Calculate the next occurrence date
    */
-  static calculateNextOccurrence(task: DailyTask, fromDate: Date = new Date()): Date {
+   private static calculateNextOccurrence(task: DailyTask, fromDate: Date = new Date()): Date {
     const nextDate = new Date(fromDate);
     nextDate.setHours(0, 0, 0, 0);
 
@@ -111,7 +111,7 @@ export class DailyTaskService {
    * Complete or cancel the daily task
    */
   static async toggleDailyTaskCompletion(
-    taskId: string, 
+    task: Task, 
     targetDate: Date = new Date()
   ): Promise<{
     task: DailyTask;
@@ -122,23 +122,15 @@ export class DailyTaskService {
       maxCompleted: number;
     }
   }> {
-    const tasks = await prisma.task.findMany({
-      where: { id: taskId }
-    });
-
-    if (tasks.length === 0) {
-      throw new Error(ErrorType.NOT_FOUND);
-    }
-
-    const task = tasks[0] as DailyTask;
+    const dailyTask = task as DailyTask;
     const today = targetDate.toISOString().split('T')[0];
 
-    if (!this.shouldTaskAppearOnDate(task, targetDate)) {
+    if (!this.shouldTaskAppearOnDate(dailyTask, targetDate)) {
       throw new Error(ErrorType.BAD_REQUEST);
     }
 
     const histories = await prisma.completionHistory.findMany({
-      where: { task_id: taskId, completion_at: today }
+      where: { task_id: task.id, completion_at: today }
     });
 
     let wasCompleted = false;
@@ -154,24 +146,24 @@ export class DailyTaskService {
     } else {
       newCompletionStatus = true;
       await prisma.completionHistory.create({
-        data: { id: ulid(), task_id: taskId, completion_at: today, is_completed: newCompletionStatus, recorded_at: new Date() }
+        data: { id: ulid(), task_id: task.id, completion_at: today, is_completed: newCompletionStatus, recorded_at: new Date() }
       });
     }
 
     await prisma.task.update({
-      where: { id: taskId },
+      where: { id: task.id },
       data: { is_completed: newCompletionStatus, updated_at: new Date() }
     });
 
-    const consecutiveStats = await this.recalculateConsecutiveStats(task);
+    const consecutiveStats = await this.recalculateConsecutiveStats(dailyTask);
 
     await prisma.task.update({
-      where: { id: taskId },
+      where: { id: task.id },
       data: { current_consecutive_completed: consecutiveStats.completed, current_consecutive_missed: consecutiveStats.missed, max_consecutive_completed: consecutiveStats.maxCompleted, last_reset_at: new Date() }
     });
 
     return {
-      task: task,
+      task: dailyTask,
       wasCompleted,
       consecutiveStats
     };
@@ -282,7 +274,7 @@ export class DailyTaskService {
   /**
    * Get the daily task statistics
    */
-  static async getDailyTaskStatistics(taskId: string): Promise<{
+  static async getDailyTaskStatistics(task: Task): Promise<{
     completionRate: number;
     currentStreak: number;
     longestStreak: number;
@@ -290,20 +282,18 @@ export class DailyTaskService {
     recentHistory: Array<{ date: string; completed: boolean; expected: boolean }>;
     nextOccurrence: string;
   }> {
-    const task = await prisma.task.findFirst({
-      where: { id: taskId, task_type: TaskType.DAILY_TASK }
-    });
+    const dailyTask = task as DailyTask;
 
     if (!task) {
       throw new Error(ErrorType.NOT_FOUND);
     }
 
-    if (task.task_type !== TaskType.DAILY_TASK) {
+    if (dailyTask.task_type !== TaskType.DAILY_TASK) {
       throw new Error(ErrorType.BAD_REQUEST);
     }
 
     const histories = await prisma.completionHistory.findMany({
-      where: { task_id: taskId, completion_at: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } },
+      where: { task_id: task.id, completion_at: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } },
       orderBy: { completion_at: 'desc' }
     });
 
@@ -312,7 +302,7 @@ export class DailyTaskService {
       completionMap.set(record.completion_at, record.is_completed);
     });
 
-    const expectedDates = this.generateExpectedDates(task as DailyTask, 30);
+    const expectedDates = this.generateExpectedDates(dailyTask, 30);
     
     let completedCount = 0;
     const recentHistory = expectedDates.map(date => {
@@ -329,66 +319,15 @@ export class DailyTaskService {
     const completionRate = expectedDates.length > 0 ? 
       (completedCount / expectedDates.length) * 100 : 0;
 
-    const nextOccurrence = this.calculateNextOccurrence(task as DailyTask);
+    const nextOccurrence = this.calculateNextOccurrence(dailyTask);
 
     return {
       completionRate: Math.round(completionRate * 100) / 100,
-      currentStreak: task.current_consecutive_completed || 0,
-      longestStreak: task.max_consecutive_completed || 0,
-      missedStreak: task.current_consecutive_missed || 0,
+      currentStreak: dailyTask.current_consecutive_completed || 0,
+      longestStreak: dailyTask.max_consecutive_completed || 0,
+      missedStreak: dailyTask.current_consecutive_missed || 0,
       recentHistory: recentHistory.reverse(),
       nextOccurrence: nextOccurrence.toISOString().split('T')[0]
-    };
-
-  }
-
-  /**
-   * Daily reset processing - check all daily tasks and handle cross-period situations
-   */
-  static async processDailyReset(): Promise<{
-    tasksProcessed: number;
-    tasksReset: number;
-  }> {
-    let tasksProcessed = 0;
-    let tasksReset = 0;
-
-    const tasksResult = await prisma.task.findMany({
-      where: { task_type: TaskType.DAILY_TASK, is_recurring: true }
-    });
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    for (const taskData of tasksResult) {
-      const task = taskData as DailyTask;
-      tasksProcessed++;
-
-      const shouldAppear = this.shouldTaskAppearOnDate(task, today);
-
-      if (shouldAppear) {
-        const existingRecord = await prisma.completionHistory.findFirst({
-          where: { task_id: task.id, completion_at: today }
-        });
-
-        if (existingRecord === null) {
-          const completionId = ulid();
-          await prisma.completionHistory.create({
-            data: { id: completionId, task_id: task.id, completion_at: today, is_completed: false }
-          });
-
-          await prisma.task.update({
-            where: { id: task.id },
-            data: { is_completed: false, updated_at: new Date() }
-          });
-
-          tasksReset++;
-        }
-      }
-    }
-
-    return {
-      tasksProcessed,
-      tasksReset
     };
   }
 }

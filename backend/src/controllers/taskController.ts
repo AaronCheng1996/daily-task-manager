@@ -1,14 +1,11 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import { HabitType, RecurrenceType, TaskType, TimeRangeType } from '../generated/prisma';
-import { DailyTaskService } from '../services/dailyTaskService';
-import { HabitService } from '../services/habitService';
-import { MilestoneService } from '../services/milestoneService';
 import { TaskService } from '../services/taskService';
-import { TodoService } from '../services/todoService';
 import { AuthRequest } from '../utils/auth';
 import logger from '../utils/logger';
 import { ErrorType, SuccessMessage } from '../utils/messages.enum';
+import { MilestoneService } from '../services/milestoneService';
 
 const createTaskSchema = z.object({
     title: z.string().min(1).max(255),
@@ -174,9 +171,14 @@ const taskController = {
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
-    getHabitStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
+    getTaskStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const stats = await HabitService.getHabitStatistics(req.params.id);
+            const task = await TaskService.getTaskById(req.params.id, req.user!.id);
+            if (!task) {
+                res.status(404).json({ error: ErrorType.NOT_FOUND });
+                return;
+            }
+            const stats = await TaskService.getTaskStatistics(task);
             res.json({ stats });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -196,298 +198,24 @@ const taskController = {
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
-    getHabitHistory: async (req: AuthRequest, res: Response): Promise<void> => {
+    reorderTasks: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const history = await HabitService.getHabitCompletionHistory(req.params.id, req.query.limit ? parseInt(req.query.limit as string) : 50);
-            res.json({ history });
+            const taskId = req.params.id;
+            const prevOrderIndex = req.body.prevOrderIndex;
+            const nextOrderIndex = req.body.nextOrderIndex;
+            await TaskService.reorderTasks(taskId, prevOrderIndex, nextOrderIndex);
+            res.json({ message: SuccessMessage.TASKS_REORDERED });
         } catch (error) {
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    getDailyTaskStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const stats = await DailyTaskService.getDailyTaskStatistics(req.params.id);
-            res.json({ stats });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    processDailyReset: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const result = await DailyTaskService.processDailyReset();
-            res.json({ message: SuccessMessage.DAILY_RESET_COMPLETED, ...result });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    getLongTermTaskStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const stats = await MilestoneService.getLongTermTaskStatistics(req.params.id);
-            res.json({ stats });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    getTaskMilestones: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const milestones = await MilestoneService.getTaskMilestones(req.params.id);
-            res.json({ milestones });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    createMilestone: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const createMilestoneSchema = z.object({
-                title: z.string().min(1).max(255),
-                description: z.string().optional(),
-                order_index: z.number().int().min(0).default(0)
-            });
-            const validatedData = createMilestoneSchema.parse(req.body);
-            const milestone = await MilestoneService.createMilestone(req.params.id, validatedData);
-            res.status(201).json({ milestone });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                  error: ErrorType.VALIDATION_ERROR, 
-                  details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    updateMilestone: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const updateMilestoneSchema = z.object({
-                title: z.string().min(1).max(255).optional(),
-                description: z.string().optional(),
-                order_index: z.number().int().min(0).optional()
-            });
-            const validatedData = updateMilestoneSchema.parse(req.body);
-            const milestone = await MilestoneService.updateMilestone(req.params.id, validatedData);
-            res.json({ milestone });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    toggleMilestoneCompletion: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const result = await MilestoneService.toggleMilestoneCompletion(req.params.id);
-            res.json({ result });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    deleteMilestone: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            await MilestoneService.deleteMilestone(req.params.id);
-            res.json({ message: SuccessMessage.MILESTONE_DELETED });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
     reorderMilestones: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const reorderSchema = z.object({
-                milestoneOrders: z.array(z.object({
-                    id: z.string(),
-                    order_index: z.number().int().min(0)
-                }))
-            });
-            const validatedData = reorderSchema.parse(req.body);
-            await MilestoneService.reorderMilestones(req.params.id, validatedData.milestoneOrders);
-            res.json({ message: SuccessMessage.MILESTONE_REORDERED });
+            const milestoneOrders = req.body.milestoneOrders;
+            await MilestoneService.reorderMilestones(req.params.id, milestoneOrders);
+            res.json({ message: SuccessMessage.MILESTONES_REORDERED });
         } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    getOverdueTasks: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const tasks = await TodoService.getOverdueTasks(req.user!.id);
-            res.json({ tasks });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    getUpcomingTasks: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const days = req.query.days ? parseInt(req.query.days as string) : 7;
-            const tasks = await TodoService.getUpcomingTasks(req.user!.id, days);
-            res.json({ tasks });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    },
-    updateOverdueTasks: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const result = await TodoService.updateOverdueTasks();
-            res.json({
-                message: SuccessMessage.OVERDUE_TASKS_UPDATED,
-                ...result
-            });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ 
-                    error: ErrorType.VALIDATION_ERROR, 
-                    details: error.errors 
-                });
-                return;
-            }
-              
-            if (error instanceof Error && error.message === ErrorType.NOT_FOUND) {
-                res.status(404).json({ error: ErrorType.NOT_FOUND });
-                return;
-            }
-              
             logger.error(error);
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
