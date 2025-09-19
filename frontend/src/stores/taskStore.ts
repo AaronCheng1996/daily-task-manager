@@ -21,7 +21,6 @@ export const useTaskStore = defineStore('task', () => {
   })
 
   const fetchTasks = async (force = false) => {
-    // 避免重複請求（除非強制刷新）
     if (loading.value && !force) {
       return
     }
@@ -46,7 +45,7 @@ export const useTaskStore = defineStore('task', () => {
     
     try {
       const response = await taskApi.createTask(taskData)
-      tasks.value.push(response.task!)
+      tasks.value.push(response.task! as Task)
       return response
     } catch (err: any) {
       error.value = err.response?.data?.error || 'Failed to create task'
@@ -64,7 +63,7 @@ export const useTaskStore = defineStore('task', () => {
       const response = await taskApi.updateTask(taskId, updates)
       const index = tasks.value.findIndex(task => task.id === taskId)
       if (index !== -1) {
-        tasks.value[index] = response.task!
+        tasks.value[index] = response.task! as Task
       }
       return response
     } catch (err: any) {
@@ -96,7 +95,7 @@ export const useTaskStore = defineStore('task', () => {
       const response = await taskApi.toggleTaskCompletion(taskId)
       const index = tasks.value.findIndex(task => task.id === taskId)
       if (index !== -1) {
-        tasks.value[index] = response.task!
+        tasks.value[index] = response.task! as Task
       }
       return response
     } catch (err: any) {

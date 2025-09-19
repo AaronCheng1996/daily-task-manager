@@ -47,27 +47,33 @@
 
       <!-- Filter Tabs -->
       <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-2 border border-white/60 shadow-soft">
-        <nav class="flex flex-wrap gap-2">
-          <button
-            v-for="filter in filters"
-            :key="filter.key"
-            @click="activeFilter = filter.key"
-            class="flex items-center px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 transform hover:scale-105"
-            :class="activeFilter === filter.key
-              ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-medium'
-              : 'text-gray-600 hover:text-gray-800 hover:bg-white/80'"
-          >
-            {{ filter.label }}
-            <span
-              v-if="filter.count > 0"
-              class="ml-2 px-2 py-1 rounded-full text-xs font-bold"
+        <nav class="flex flex-wrap justify-between items-center gap-2">
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="filter in filters"
+              :key="filter.key"
+              @click="activeFilter = filter.key"
+              class="flex items-center px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 transform hover:scale-105"
               :class="activeFilter === filter.key
-                ? 'bg-white/20 text-white'
-                : 'bg-gray-100 text-gray-700'"
+                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-medium'
+                : 'text-gray-600 hover:text-gray-800 hover:bg-white/80'"
             >
-              {{ filter.count }}
-            </span>
-          </button>
+              {{ filter.label }}
+              <span
+                v-if="filter.count > 0"
+                class="ml-2 px-2 py-1 rounded-full text-xs font-bold"
+                :class="activeFilter === filter.key
+                  ? 'bg-white/20 text-white'
+                  : 'bg-gray-100 text-gray-700'"
+              >
+                {{ filter.count }}
+              </span>
+            </button>
+          </div>
+          <TaskStatusDropdown
+            v-if="activeFilter != 'habit'"
+            v-model="taskStatusFilter"
+          />
         </nav>
       </div>
     </div>
@@ -106,7 +112,6 @@
           class="animate-slide-up"
           :style="`animation-delay: ${Math.min(index * 0.1, 1)}s;`"
         >
-          <!-- 習慣任務使用專門的組件 -->
           <HabitTaskItem
             v-if="task.task_type === TaskType.HABIT"
             :habit="task as HabitTask"
@@ -114,7 +119,6 @@
             @delete="handleDeleteTask"
             @updated="handleTaskUpdated"
           />
-          <!-- 每日任務使用專門的組件 -->
           <DailyTaskItem
             v-else-if="task.task_type === TaskType.DAILY_TASK"
             :task="task as DailyTask"
@@ -122,7 +126,6 @@
             @delete="handleDeleteTask"
             @updated="handleTaskUpdated"
           />
-          <!-- 長期任務使用專門的組件 -->
           <LongTermTaskItem
             v-else-if="task.task_type === TaskType.LONG_TERM"
             :task="task as LongTermTask"
@@ -130,7 +133,6 @@
             @delete="handleDeleteTask"
             @updated="handleTaskUpdated"
           />
-          <!-- TODO 任務使用通用組件 -->
           <TaskItem
             v-else
             :task="task"
@@ -200,6 +202,7 @@ import DailyTaskItem from '@/components/DailyTaskItem.vue'
 import LongTermTaskItem from '@/components/LongTermTaskItem.vue'
 import CreateTaskModal from '@/components/CreateTaskModal.vue'
 import EditTaskModal from '@/components/EditTaskModal.vue'
+import TaskStatusDropdown from '@/components/TaskStatusDropdown.vue'
 
 const taskStore = useTaskStore()
 const showCreateTask = ref(false)
@@ -207,6 +210,7 @@ const showEditTask = ref(false)
 const editingTask = ref<Task | null>(null)
 const activeFilter = ref('all')
 const searchKeyword = ref('')
+const taskStatusFilter = ref('all')
 
 const filters = computed(() => [
   {
@@ -233,23 +237,12 @@ const filters = computed(() => [
     key: 'longterm',
     label: 'Long-term',
     count: taskStore.tasksByType(TaskType.LONG_TERM).length
-  },
-  {
-    key: 'completed',
-    label: 'Completed',
-    count: taskStore.completedTasks.length
-  },
-  {
-    key: 'incomplete',
-    label: 'Incomplete',
-    count: taskStore.incompleteTasks.length
   }
 ])
 
 const filteredTasks = computed(() => {
   let tasks: Task[] = []
   
-  // First, filter by type/status
   switch (activeFilter.value) {
     case 'todo':
       tasks = taskStore.tasksByType(TaskType.TODO)
@@ -263,18 +256,16 @@ const filteredTasks = computed(() => {
     case 'longterm':
       tasks = taskStore.tasksByType(TaskType.LONG_TERM)
       break
-    case 'completed':
-      tasks = taskStore.completedTasks
-      break
-    case 'incomplete':
-      tasks = taskStore.incompleteTasks
-      break
     default:
       tasks = taskStore.tasks
       break
   }
 
-  // Then, apply search keyword filter if exists
+  if (activeFilter.value !== 'habit' && taskStatusFilter.value !== 'all') {
+    const isCompleted = taskStatusFilter.value === 'complete'
+    tasks = tasks.filter(task => task.is_completed === isCompleted)
+  }
+
   if (searchKeyword.value.trim()) {
     const keyword = searchKeyword.value.trim().toLowerCase()
     tasks = tasks.filter(task => 
@@ -311,18 +302,15 @@ const handleDeleteTask = async (taskId: string) => {
 
 const handleTaskCreated = () => {
   showCreateTask.value = false
-  // Tasks are automatically updated via the store
 }
 
 const handleTaskUpdated = () => {
   showEditTask.value = false
   editingTask.value = null
-  // Re-fetch tasks to ensure we have the latest data
   taskStore.fetchTasks()
 }
 
 const handleTaskRefresh = () => {
-  // 重新獲取任務列表以更新數據（節流處理，避免頻繁調用）
   if (!taskStore.loading) {
     taskStore.fetchTasks()
   }

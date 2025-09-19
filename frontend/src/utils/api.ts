@@ -8,7 +8,8 @@ import type {
   HabitStatistics,
   DailyTaskStatistics,
   LongTermTaskStatistics,
-  Milestone
+  Milestone,
+  ResetPasswordData
 } from '@/types'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
@@ -20,7 +21,6 @@ const api = axios.create({
   },
 })
 
-// Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -29,12 +29,10 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear invalid token
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       window.location.href = '/login'
@@ -51,6 +49,11 @@ export const authApi = {
 
   register: async (data: RegisterData): Promise<ApiResponse> => {
     const response = await api.post('/register', data)
+    return response.data
+  },
+
+  resetPassword: async (data: ResetPasswordData): Promise<ApiResponse> => {
+    const response = await api.post('/reset-password', data)
     return response.data
   },
 
@@ -96,25 +99,11 @@ export const taskApi = {
     return response.data
   },
 
-  // Habit specific APIs
-  getHabitStatistics: async (id: string): Promise<ApiResponse & { stats: HabitStatistics }> => {
-    const response = await api.get(`/tasks/${id}/habit-stats`)
+  getTaskStatistics: async (id: string): Promise<ApiResponse & { stats: HabitStatistics | DailyTaskStatistics | LongTermTaskStatistics }> => {
+    const response = await api.get(`/tasks/${id}/stats`)
     return response.data
   },
 
-  // Daily task specific APIs
-  getDailyTaskStatistics: async (id: string): Promise<ApiResponse & { stats: DailyTaskStatistics }> => {
-    const response = await api.get(`/tasks/${id}/daily-stats`)
-    return response.data
-  },
-
-  // Long-term task specific APIs
-  getLongTermTaskStatistics: async (id: string): Promise<ApiResponse & { stats: LongTermTaskStatistics }> => {
-    const response = await api.get(`/tasks/${id}/long-term-stats`)
-    return response.data
-  },
-
-  // Milestone management APIs
   getTaskMilestones: async (taskId: string): Promise<ApiResponse & { milestones: Milestone[] }> => {
     const response = await api.get(`/tasks/${taskId}/milestones`)
     return response.data
@@ -145,6 +134,16 @@ export const taskApi = {
 
   deleteMilestone: async (taskId: string, milestoneId: string): Promise<ApiResponse> => {
     const response = await api.delete(`/tasks/${taskId}/milestones/${milestoneId}`)
+    return response.data
+  },
+
+  reorderTasks: async (taskId: string, prevOrderIndex: number | null, nextOrderIndex: number | null): Promise<ApiResponse> => {
+    const response = await api.post(`/tasks/${taskId}/reorder`, { prevOrderIndex, nextOrderIndex })
+    return response.data
+  },
+
+  reorderMilestones: async (taskId: string, milestoneId: string, orderIndex: number): Promise<ApiResponse> => {
+    const response = await api.post(`/tasks/${taskId}/milestones/${milestoneId}/reorder`, { orderIndex })
     return response.data
   },
 }

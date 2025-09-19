@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # Database
   postgres:
     image: postgres:15-alpine
     environment:
@@ -18,7 +15,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # Redis for caching and sessions
   redis:
     image: redis:7-alpine
     ports:
@@ -31,7 +27,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # Backend API
   backend:
     build: 
       context: ./backend
@@ -51,9 +46,9 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - /app/src/generated
     command: sh -c "npx prisma migrate deploy && npm run dev"
 
-  # Frontend
   frontend:
     build: ./frontend
     ports:

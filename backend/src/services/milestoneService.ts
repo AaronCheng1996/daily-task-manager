@@ -1,8 +1,8 @@
-import moment from 'moment';
 import { ulid } from 'ulid';
 import { Milestone, Task, TaskType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
 import { prisma } from '../utils/prisma';
+import moment from 'moment';
 
 export class MilestoneService {
   /**
@@ -40,7 +40,7 @@ export class MilestoneService {
 
     await this.recalculateTaskProgress(taskId);
 
-    return milestone as Milestone;
+    return milestone;
   }
 
   /**
@@ -49,7 +49,10 @@ export class MilestoneService {
   static async getTaskMilestones(taskId: string): Promise<Milestone[]> {
     const milestones = await prisma.milestone.findMany({
       where: { task_id: taskId },
-      orderBy: { order_index: 'asc', created_at: 'asc' }
+      orderBy: [
+        { order_index: 'asc' },
+        { created_at: 'asc' }
+      ]
     });
 
     return milestones;
@@ -66,15 +69,11 @@ export class MilestoneService {
       order_index?: number;
     }
   ): Promise<Milestone | null> {
-    try {
-      const updatedMilestone = await prisma.milestone.update({
-        where: { id: milestoneId },
-        data: updates
-      });
-      return updatedMilestone as Milestone;
-    } catch (error) {
-      throw error;
-    }
+    const updatedMilestone = await prisma.milestone.update({
+      where: { id: milestoneId },
+      data: updates
+    });
+    return updatedMilestone;
   }
 
   /**
@@ -102,7 +101,7 @@ export class MilestoneService {
     };
 
     if (newCompletedStatus) {
-      updateData.completion_at = new Date();
+      updateData.completion_at = moment().toDate();
     }
 
     const updatedMilestone = await prisma.milestone.update({
@@ -113,7 +112,7 @@ export class MilestoneService {
     const { progress, isCompleted } = await this.recalculateTaskProgress(milestone.task_id);
 
     return {
-      milestone: updatedMilestone as Milestone,
+      milestone: updatedMilestone,
       taskProgress: progress,
       taskCompleted: isCompleted
     };
@@ -163,7 +162,7 @@ export class MilestoneService {
 
     await prisma.task.update({
       where: { id: taskId },
-      data: { progress: progress, is_completed: isCompleted, updated_at: new Date() }
+      data: { progress: progress, is_completed: isCompleted, updated_at: moment().toDate() }
     });
 
     return {
@@ -192,7 +191,10 @@ export class MilestoneService {
 
     const milestones = await prisma.milestone.findMany({
       where: { task_id: task.id },
-      orderBy: { order_index: 'asc', created_at: 'asc' }
+      orderBy: [
+        { order_index: 'asc' },
+        { created_at: 'asc' }
+      ]
     });
 
     const totalMilestones = milestones.length;
@@ -203,12 +205,12 @@ export class MilestoneService {
     let daysToTarget = 0;
 
     if (task.target_completion_at) {
-      const targetDate = new Date(task.target_completion_at);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      targetDate.setHours(0, 0, 0, 0);
+      const targetDate = moment(task.target_completion_at);
+      const today = moment();
+      const todayStart = moment(today).startOf('day');
+      const targetStart = moment(targetDate).startOf('day');
 
-      daysToTarget = moment(targetDate).diff(moment(today), 'days');
+      daysToTarget = targetStart.diff(todayStart, 'days');
       isOverdue = daysToTarget < 0 && !task.is_completed;
     }
 

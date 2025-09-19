@@ -253,6 +253,9 @@ const form = reactive({
   is_recurring: true,
   recurrence_type: 'DAILY',
   recurrence_interval: 1,
+  recurrence_days_of_week: [],
+  recurrence_days_of_month: [],
+  recurrence_weeks_of_month: [],
   // LONG_TERM fields
   show_progress: true,
   target_completion_at: ''
@@ -292,6 +295,9 @@ const handleSubmit = async () => {
       taskData.is_recurring = form.is_recurring
       taskData.recurrence_type = form.recurrence_type
       taskData.recurrence_interval = form.recurrence_interval
+      taskData.recurrence_days_of_week = form.recurrence_days_of_week
+      taskData.recurrence_days_of_month = form.recurrence_days_of_month
+      taskData.recurrence_weeks_of_month = form.recurrence_weeks_of_month
     }
 
     if (form.task_type === TaskType.LONG_TERM) {

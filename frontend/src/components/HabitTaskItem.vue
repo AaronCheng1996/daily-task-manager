@@ -177,8 +177,8 @@ const handleHabitCompletion = async () => {
 
 const loadStatistics = async () => {
   try {
-    const response = await taskApi.getHabitStatistics(props.habit.id)
-    statistics.value = response.stats
+    const response = await taskApi.getTaskStatistics(props.habit.id)
+    statistics.value = response.stats as HabitStatistics
   } catch (error) {
     console.error('Failed to load habit statistics:', error)
   }

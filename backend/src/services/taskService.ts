@@ -5,31 +5,28 @@ import { prisma } from '../utils/prisma';
 import { DailyTaskService } from './dailyTaskService';
 import { HabitService } from './habitService';
 import { MilestoneService } from './milestoneService';
+import logger from '../utils/logger';
 
 let lastTaskOrderIndex = 0;
 
 export class TaskService {
-  static async getUserTasks(userId: string, filter: object, skip: number, take: number): Promise<Task[]> {
+  static async getUserTasks(userId: string): Promise<Task[]> {
     const tasks = await prisma.task.findMany({
       where: { user_id: userId },
       orderBy: { created_at: 'desc' },
-      skip,
-      take,
-      ...filter
     });
     
-    return tasks as Task[];
+    return tasks;
   }
 
-  static async getTaskById(taskId: string, userId: string): Promise<Task | null> {
+  static async getTaskById(taskId: string): Promise<Task | null> {
     const task = await prisma.task.findFirst({
       where: {
         id: taskId,
-        user_id: userId
       }
     });
     
-    return task as Task | null;
+    return task;
   }
 
   static async createTask(userId: string, taskData: any): Promise<Task> {
@@ -38,57 +35,48 @@ export class TaskService {
       newTask = taskData as Task;
       newTask.id = ulid();
     } catch (error) {
+      logger.error(error);
       throw new Error(ErrorType.BAD_REQUEST);
     }
 
     if (lastTaskOrderIndex === 0) {
-      lastTaskOrderIndex = await this.getLastTaskOrderIndex(userId);
+      lastTaskOrderIndex = await this.getLastTaskOrderIndex();
     }
     lastTaskOrderIndex += 1000;
 
-    try {
-      const result = await prisma.task.create({
-        data: {
-          ...newTask,
-          user_id: userId,
-          order_index: lastTaskOrderIndex
-        }
-      });
-      return result as Task;
-    } catch (error) {
-      throw error;
-    }    
+    const result = await prisma.task.create({
+      data: {
+        ...newTask,
+        user_id: userId,
+        order_index: lastTaskOrderIndex
+      }
+    });
+    return result;
   }
 
-  static async updateTask(taskId: string, userId: string, updates: Partial<any>): Promise<Task | null> {
-    try {
-      const updatedTask = await prisma.task.update({
-        where: { id: taskId },
-        data: updates
-      });    
-      return updatedTask as Task;
-    } catch (error) {
-      throw error;
-    }
+  static async updateTask(taskId: string, updates: Partial<any>): Promise<Task | null> {
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: updates
+    });    
+    return updatedTask;
   }
 
-  static async deleteTask(taskId: string, userId: string): Promise<boolean> {
+  static async deleteTask(taskId: string): Promise<boolean> {
     const result = await prisma.task.delete({
       where: {
-        id: taskId,
-        user_id: userId
+        id: taskId
       }
     });
     
     return result !== null;
   }
 
-  static async toggleTaskCompletion(taskId: string, userId: string): Promise<Task | null> {
+  static async toggleTaskCompletion(taskId: string): Promise<Task | null> {
     return await prisma.$transaction(async (tx) => {
       const task = await tx.task.findFirst({
         where: {
           id: taskId,
-          user_id: userId
         }
       });
       
@@ -98,13 +86,13 @@ export class TaskService {
       
       if (task.task_type === TaskType.HABIT) {
         const habitResult = await HabitService.recordHabitCompletion(task);
-        return habitResult.task as Task;
+        return habitResult.task;
       }
       
       if (task.task_type === TaskType.DAILY_TASK) {
         const targetDate = new Date();
         const dailyResult = await DailyTaskService.toggleDailyTaskCompletion(task, targetDate);
-        return dailyResult.task as Task;
+        return dailyResult.task;
       }
       
       const newCompletedStatus = !task.is_completed;
@@ -123,7 +111,7 @@ export class TaskService {
         data: updateData
       });
       
-      return updatedTask as Task;
+      return updatedTask;
     });
   }
 
@@ -139,9 +127,8 @@ export class TaskService {
     }
   }
 
-  private static async getLastTaskOrderIndex(userId: string): Promise<number> {
+  private static async getLastTaskOrderIndex(): Promise<number> {
     const task = await prisma.task.findFirst({
-        where: { user_id: userId },
         orderBy: { order_index: 'desc' },
         select: { order_index: true }
     });

@@ -178,15 +178,15 @@ const handleToggleCompletion = async () => {
 
 const loadStatistics = async () => {
   try {
-    const response = await taskApi.getDailyTaskStatistics(props.task.id)
-    statistics.value = response.stats
+    const response = await taskApi.getTaskStatistics(props.task.id)
+    statistics.value = response.stats as DailyTaskStatistics
   } catch (error) {
     console.error('Failed to load daily task statistics:', error)
   }
 }
 
 const getRecurrenceDescription = (): string => {
-  const { recurrence_type, recurrence_interval, recurrence_days_of_week, recurrence_days_of_month } = props.task
+  const { recurrence_type, recurrence_interval, recurrence_days_of_week, recurrence_days_of_month, recurrence_weeks_of_month } = props.task
   
   switch (recurrence_type) {
     case 'DAILY':
@@ -220,7 +220,7 @@ const getRecurrenceDescription = (): string => {
       }
       return 'Specific days of month'
     case 'WEEK_OF_MONTH_ON_DAYS':
-    if (recurrence_days_of_week && recurrence_days_of_week.length > 0) {
+      if (recurrence_days_of_week && recurrence_days_of_week.length > 0) {
         const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
         const days = recurrence_days_of_week.map(day => dayNames[day]).join(', ')
         return `Weekly on ${days}`

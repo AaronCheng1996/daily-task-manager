@@ -5,7 +5,6 @@ import { TaskService } from '../services/taskService';
 import { AuthRequest } from '../utils/auth';
 import logger from '../utils/logger';
 import { ErrorType, SuccessMessage } from '../utils/messages.enum';
-import { MilestoneService } from '../services/milestoneService';
 
 const createTaskSchema = z.object({
     title: z.string().min(1).max(255),
@@ -35,10 +34,7 @@ const createTaskSchema = z.object({
 const taskController = {
     getTasks: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const filter = req.query.filter as object;
-            const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
-            const take = req.query.take ? parseInt(req.query.take as string) : 100;
-            const tasks = await TaskService.getUserTasks(req.user!.id, filter, skip, take);
+            const tasks = await TaskService.getUserTasks(req.user!.id);
             res.json({ tasks });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -60,7 +56,7 @@ const taskController = {
     },
     getTaskById: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const task = await TaskService.getTaskById(req.params.id, req.user!.id);
+            const task = await TaskService.getTaskById(req.params.id);
             res.json({ task });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -107,7 +103,7 @@ const taskController = {
         try {
             const updateSchema = createTaskSchema.partial();
             const updates = updateSchema.parse(req.body);
-            const task = await TaskService.updateTask(req.params.id, req.user!.id, updates);
+            const task = await TaskService.updateTask(req.params.id, updates);
             res.json({ task });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -129,7 +125,7 @@ const taskController = {
     },
     deleteTask: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            await TaskService.deleteTask(req.params.id, req.user!.id);
+            await TaskService.deleteTask(req.params.id);
             res.json({ message: SuccessMessage.TASK_DELETED });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -151,7 +147,7 @@ const taskController = {
     },
     toggleTaskCompletion: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const task = await TaskService.toggleTaskCompletion(req.params.id, req.user!.id);
+            const task = await TaskService.toggleTaskCompletion(req.params.id);
             res.json({ task });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -173,7 +169,7 @@ const taskController = {
     },
     getTaskStatistics: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const task = await TaskService.getTaskById(req.params.id, req.user!.id);
+            const task = await TaskService.getTaskById(req.params.id);
             if (!task) {
                 res.status(404).json({ error: ErrorType.NOT_FOUND });
                 return;
@@ -210,16 +206,6 @@ const taskController = {
             res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
         }
     },
-    reorderMilestones: async (req: AuthRequest, res: Response): Promise<void> => {
-        try {
-            const milestoneOrders = req.body.milestoneOrders;
-            await MilestoneService.reorderMilestones(req.params.id, milestoneOrders);
-            res.json({ message: SuccessMessage.MILESTONES_REORDERED });
-        } catch (error) {
-            logger.error(error);
-            res.status(500).json({ error: ErrorType.INTERNAL_SERVER_ERROR });
-        }
-    }
 }
 
 export default taskController;

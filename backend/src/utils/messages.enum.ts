@@ -39,4 +39,6 @@ export enum SuccessMessage {
   TODO_COMPLETION_STATS_FETCHED = 'TODO completion stats fetched successfully',
   OVERDUE_TASKS_UPDATED = 'Overdue tasks updated successfully',
   TASK_DUE_DATE_UPDATED = 'Task due date updated successfully',
+  TASK_COMPLETION_TOGGLED = 'Task completion toggled successfully',
+  MILESTONE_COMPLETION_TOGGLED = 'Milestone completion toggled successfully',
 }

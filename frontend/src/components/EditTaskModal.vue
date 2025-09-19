@@ -345,7 +345,7 @@ const handleSubmit = async () => {
       if (form.due_at) {
         taskData.due_at = new Date(form.due_at).toISOString()
       } else {
-        taskData.due_at = null
+        taskData.due_at = undefined
       }
     }
 
@@ -372,10 +372,10 @@ const handleSubmit = async () => {
           taskData.target_completion_at = new Date(form.target_completion_at).toISOString()
         } catch (e) {
           console.error('Invalid date format:', form.target_completion_at, e)
-          taskData.target_completion_at = null
+          taskData.target_completion_at = undefined
         }
       } else {
-        taskData.target_completion_at = null
+        taskData.target_completion_at = undefined
       }
     }
 

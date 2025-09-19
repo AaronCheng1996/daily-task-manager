@@ -1,6 +1,3 @@
-// Daily Task Manager Prisma Schema
-// This schema defines the database structure for the Daily Task Manager application
-
 generator client {
   provider      = "prisma-client-js"
   output        = "../src/generated/prisma"
@@ -12,7 +9,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums
 enum TaskType {
   HABIT
   DAILY_TASK
@@ -42,9 +38,9 @@ enum TimeRangeType {
   DAYS
   WEEKS
   MONTHS
+  YEARS
 }
 
-// Models
 model User {
   id                String   @id @db.VarChar(26)
   username          String   @unique @db.VarChar(50)
@@ -56,7 +52,6 @@ model User {
   created_at        DateTime @default(now()) @db.Timestamptz(6)
   updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
-  // Relations
   tasks             Task[]
 
   @@map("users")
@@ -74,14 +69,12 @@ model Task {
   created_at        DateTime @default(now()) @db.Timestamptz(6)
   updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
-  // HABIT specific fields
   habit_type        HabitType?
   threshold_count   Int?
   time_range_value  Int?
   time_range_type   TimeRangeType?
   last_completion_time DateTime? @db.Timestamptz(6)
 
-  // DAILY_TASK specific fields
   started_at                    DateTime? @db.Timestamptz(6)
   is_recurring                  Boolean   @default(true)
   recurrence_type               RecurrenceType?
@@ -94,16 +87,13 @@ model Task {
   max_consecutive_completed     Int       @default(0)
   last_reset_at                 DateTime? @db.Timestamptz(6)
 
-  // TODO specific fields
   due_at      DateTime? @db.Timestamptz(6)
   is_overdue  Boolean   @default(false)
 
-  // LONG_TERM specific fields
   progress                Decimal @default(0.00) @db.Decimal(3, 2)
   show_progress           Boolean @default(true)
   target_completion_at    DateTime? @db.Timestamptz(6)
 
-  // Relations
   user                   User                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
   completion_history     CompletionHistory[]
   habit_completions      HabitCompletion[]
@@ -122,7 +112,6 @@ model CompletionHistory {
   is_completed Boolean
   recorded_at  DateTime @default(now()) @db.Timestamptz(6)
 
-  // Relations
   task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
   @@index([task_id], map: "idx_completion_history_task_id")
@@ -135,7 +124,6 @@ model HabitCompletion {
   task_id     String   @db.VarChar(26)
   completed_at DateTime @default(now()) @db.Timestamptz(6)
 
-  // Relations
   task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
   @@index([task_id], map: "idx_habit_completions_task_id")
@@ -153,7 +141,6 @@ model Milestone {
   order_index  Int
   created_at   DateTime  @default(now()) @db.Timestamptz(6)
 
-  // Relations
   task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
 
   @@index([task_id], map: "idx_milestones_task_id")

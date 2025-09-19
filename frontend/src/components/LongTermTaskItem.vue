@@ -313,11 +313,11 @@ const getTargetDateText = (): string => {
 const loadData = async () => {
   try {
     const [statsResponse, milestonesResponse] = await Promise.all([
-      taskApi.getLongTermTaskStatistics(props.task.id),
+      taskApi.getTaskStatistics(props.task.id),
       taskApi.getTaskMilestones(props.task.id)
     ])
     
-    statistics.value = statsResponse.stats
+    statistics.value = statsResponse.stats as LongTermTaskStatistics
     milestones.value = milestonesResponse.milestones
   } catch (error) {
     console.error('Failed to load long-term task data:', error)
@@ -366,7 +366,7 @@ const toggleMilestone = async (milestoneId: string) => {
   loadingMilestone.value = true
   
   try {
-    await taskApi.toggleMilestoneCompletion(milestoneId)
+    await taskApi.toggleMilestoneCompletion(milestoneId, props.task.id)
     
     // 更新本地里程碑狀態
     const milestone = milestones.value.find(m => m.id === milestoneId)
@@ -375,7 +375,7 @@ const toggleMilestone = async (milestoneId: string) => {
       if (milestone.is_completed) {
         milestone.completion_at = new Date().toISOString()
       } else {
-        milestone.completion_at = null
+        milestone.completion_at = undefined
       }
     }
     
@@ -403,7 +403,7 @@ const deleteMilestone = async (milestoneId: string) => {
   loadingMilestone.value = true
   
   try {
-    await taskApi.deleteMilestone(milestoneId)
+    await taskApi.deleteMilestone(milestoneId, props.task.id)
     
     // 從本地列表中移除里程碑
     const index = milestones.value.findIndex(m => m.id === milestoneId)
@@ -449,7 +449,7 @@ const saveEditMilestone = async () => {
   loadingMilestone.value = true
   
   try {
-    await taskApi.updateMilestone(editingMilestone.value.id, {
+    await taskApi.updateMilestone(props.task.id, editingMilestone.value.id, {
       title: editMilestoneForm.value.title,
       description: editMilestoneForm.value.description || undefined
     })

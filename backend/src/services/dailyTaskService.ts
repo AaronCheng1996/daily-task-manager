@@ -23,6 +23,15 @@ export class DailyTaskService {
       return false;
     }
 
+    const daysDiff = moment(targetDate).diff(moment(taskDate), 'days');
+    const weeksDiff = moment(targetDate).diff(moment(taskDate), 'weeks');
+    const monthsDiff = moment(targetDate).diff(moment(taskDate), 'months');
+
+    const firstDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+    const dayOfWeekOfFirst = firstDayOfMonth.getDay();
+    const dayOfMonth = targetDate.getDate();
+    const weekOfMonth = Math.ceil((dayOfMonth + dayOfWeekOfFirst - 1) / 7);
+
     switch (task.recurrence_type) {
       case RecurrenceType.DAILY:
         return true;
@@ -38,17 +47,14 @@ export class DailyTaskService {
                targetDate.getDate() === taskDate.getDate();
                
       case RecurrenceType.EVERY_X_DAYS:
-        const daysDiff = moment(targetDate).diff(moment(taskDate), 'days');
         return daysDiff >= 0 && daysDiff % (task.recurrence_interval || 1) === 0;
         
       case RecurrenceType.EVERY_X_WEEKS:
-        const weeksDiff = moment(targetDate).diff(moment(taskDate), 'weeks');
         return weeksDiff >= 0 && 
                weeksDiff % (task.recurrence_interval || 1) === 0 &&
                targetDate.getDay() === taskDate.getDay();
                
       case RecurrenceType.EVERY_X_MONTHS:
-        const monthsDiff = moment(targetDate).diff(moment(taskDate), 'months');
         return monthsDiff >= 0 && 
                monthsDiff % (task.recurrence_interval || 1) === 0 &&
                targetDate.getDate() === taskDate.getDate();
@@ -68,11 +74,6 @@ export class DailyTaskService {
         if (!task.recurrence_days_of_week?.includes(targetDate.getDay())) {
           return false;
         }
-        // 以週日為起點計算當天是該月第幾週
-        const firstDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
-        const dayOfWeekOfFirst = firstDayOfMonth.getDay();
-        const dayOfMonth = targetDate.getDate();
-        const weekOfMonth = Math.ceil((dayOfMonth + dayOfWeekOfFirst - 1) / 7);
         if (!task.recurrence_weeks_of_month?.includes(weekOfMonth)) {
           return false;
         }
@@ -123,14 +124,21 @@ export class DailyTaskService {
     }
   }> {
     const dailyTask = task as DailyTask;
-    const today = targetDate.toISOString().split('T')[0];
+    const startOfDay = moment(targetDate).startOf('day');
+    const endOfDay = moment(targetDate).endOf('day');
 
     if (!this.shouldTaskAppearOnDate(dailyTask, targetDate)) {
       throw new Error(ErrorType.BAD_REQUEST);
     }
 
     const histories = await prisma.completionHistory.findMany({
-      where: { task_id: task.id, completion_at: today }
+      where: { 
+        task_id: task.id, 
+        completion_at: {
+          gte: startOfDay.toDate(),
+          lte: endOfDay.toDate()
+        }
+      }
     });
 
     let wasCompleted = false;
@@ -141,25 +149,25 @@ export class DailyTaskService {
       newCompletionStatus = !wasCompleted;
       await prisma.completionHistory.update({
         where: { id: histories[0].id },
-        data: { is_completed: newCompletionStatus, recorded_at: new Date() }
+        data: { is_completed: newCompletionStatus, recorded_at: moment().toDate() }
       });
     } else {
       newCompletionStatus = true;
       await prisma.completionHistory.create({
-        data: { id: ulid(), task_id: task.id, completion_at: today, is_completed: newCompletionStatus, recorded_at: new Date() }
+        data: { id: ulid(), task_id: task.id, completion_at: startOfDay.toDate(), is_completed: newCompletionStatus, recorded_at: moment().toDate() }
       });
     }
 
     await prisma.task.update({
       where: { id: task.id },
-      data: { is_completed: newCompletionStatus, updated_at: new Date() }
+      data: { is_completed: newCompletionStatus, updated_at: moment().toDate() }
     });
 
     const consecutiveStats = await this.recalculateConsecutiveStats(dailyTask);
 
     await prisma.task.update({
       where: { id: task.id },
-      data: { current_consecutive_completed: consecutiveStats.completed, current_consecutive_missed: consecutiveStats.missed, max_consecutive_completed: consecutiveStats.maxCompleted, last_reset_at: new Date() }
+      data: { current_consecutive_completed: consecutiveStats.completed, current_consecutive_missed: consecutiveStats.missed, max_consecutive_completed: consecutiveStats.maxCompleted, last_reset_at: moment().toDate() }
     });
 
     return {
@@ -178,61 +186,51 @@ export class DailyTaskService {
     maxCompleted: number;
   }> {
     const histories = await prisma.completionHistory.findMany({
-      where: { task_id: task.id, completion_at: { gte: new Date(new Date().setDate(new Date().getDate() - 365)) } },
+      where: { task_id: task.id, completion_at: { gte: moment().subtract(365, 'days').toDate() } },
       orderBy: { completion_at: 'desc' }
     });
 
     const shouldAppearDates = this.generateExpectedDates(task, 365);
-    
+    const completionMap = this.buildCompletionMap(histories);
+    const sortedDates = [...shouldAppearDates].sort((a, b) => b.getTime() - a.getTime());
+
+    return this.calculateStreakStats(sortedDates, completionMap, task);
+  }
+
+  private static buildCompletionMap(histories: Array<{ completion_at: Date; is_completed: boolean }>): Map<Date, boolean> {
     const completionMap = new Map();
-    histories.forEach((record: { completion_at: Date; is_completed: boolean }) => {
+    histories.forEach((record) => {
       completionMap.set(record.completion_at, record.is_completed);
     });
+    return completionMap;
+  }
 
+  private static calculateStreakStats(sortedDates: Date[], completionMap: Map<Date, boolean>, task: DailyTask): {
+    completed: number;
+    missed: number;
+    maxCompleted: number;
+  } {
     let currentConsecutiveCompleted = 0;
     let currentConsecutiveMissed = 0;
     let maxConsecutiveCompleted = 0;
     let tempConsecutiveCompleted = 0;
-    
-    const sortedDates = shouldAppearDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-
     let foundFirstStatus = false;
-    const today = new Date();
-    
+    const today = moment().toDate();
+
     for (const date of sortedDates) {
       const wasCompleted = completionMap.get(date) || false;
-      const isToday = date.toISOString().split('T')[0] === today.toISOString().split('T')[0];
-      
+      const isToday = moment(date).isSame(moment(today), 'day');
       const shouldCountAsMissed = !wasCompleted && !isToday;
-      
-      if (!foundFirstStatus) {
-        foundFirstStatus = true;
-        if (wasCompleted) {
-          currentConsecutiveCompleted = 1;
-          tempConsecutiveCompleted = 1;
-          currentConsecutiveMissed = 0;
-        } else if (shouldCountAsMissed) {
-          currentConsecutiveMissed = 1;
-          currentConsecutiveCompleted = 0;
-          tempConsecutiveCompleted = 0;
-        }
-      } else {
-        if (wasCompleted && currentConsecutiveCompleted > 0) {
-          currentConsecutiveCompleted++;
-          tempConsecutiveCompleted++;
-        } else if (shouldCountAsMissed && currentConsecutiveMissed > 0) {
-          currentConsecutiveMissed++;
-        } else if (wasCompleted && currentConsecutiveMissed > 0) {
-          currentConsecutiveCompleted = 1;
-          currentConsecutiveMissed = 0;
-          tempConsecutiveCompleted = 1;
-        } else if (shouldCountAsMissed && currentConsecutiveCompleted > 0) {
-          currentConsecutiveMissed = 1;
-          currentConsecutiveCompleted = 0;
-          tempConsecutiveCompleted = 0;
-        }
-      }
-      
+
+      const stats = this.updateStreakCounts(
+        wasCompleted, shouldCountAsMissed, foundFirstStatus,
+        currentConsecutiveCompleted, currentConsecutiveMissed, tempConsecutiveCompleted
+      );
+
+      foundFirstStatus = true;
+      currentConsecutiveCompleted = stats.completed;
+      currentConsecutiveMissed = stats.missed;
+      tempConsecutiveCompleted = stats.tempCompleted;
       maxConsecutiveCompleted = Math.max(maxConsecutiveCompleted, tempConsecutiveCompleted);
     }
 
@@ -241,6 +239,30 @@ export class DailyTaskService {
       missed: currentConsecutiveMissed,
       maxCompleted: Math.max(maxConsecutiveCompleted, task.max_consecutive_completed || 0)
     };
+  }
+
+  private static updateStreakCounts(
+    wasCompleted: boolean, shouldCountAsMissed: boolean, foundFirstStatus: boolean,
+    currentCompleted: number, currentMissed: number, tempCompleted: number
+  ): { completed: number; missed: number; tempCompleted: number } {
+    if (!foundFirstStatus) {
+      if (wasCompleted) {
+        return { completed: 1, missed: 0, tempCompleted: 1 };
+      }
+      if (shouldCountAsMissed) {
+        return { completed: 0, missed: 1, tempCompleted: 0 };
+      }
+    } else if (wasCompleted && currentCompleted > 0) {
+      return { completed: currentCompleted + 1, missed: currentMissed, tempCompleted: tempCompleted + 1 };
+    } else if (shouldCountAsMissed && currentMissed > 0) {
+      return { completed: currentCompleted, missed: currentMissed + 1, tempCompleted: tempCompleted };
+    } else if (wasCompleted && currentMissed > 0) {
+      return { completed: 1, missed: 0, tempCompleted: 1 };
+    } else if (shouldCountAsMissed && currentCompleted > 0) {
+      return { completed: 0, missed: 1, tempCompleted: 0 };
+    }
+
+    return { completed: currentCompleted, missed: currentMissed, tempCompleted: tempCompleted };
   }
 
   /**
@@ -293,7 +315,7 @@ export class DailyTaskService {
     }
 
     const histories = await prisma.completionHistory.findMany({
-      where: { task_id: task.id, completion_at: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) } },
+      where: { task_id: task.id, completion_at: { gte: moment().subtract(30, 'days').toDate() } },
       orderBy: { completion_at: 'desc' }
     });
 

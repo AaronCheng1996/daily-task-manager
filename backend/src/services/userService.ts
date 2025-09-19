@@ -9,24 +9,20 @@ const SALT_ROUNDS = 12;
 
 export class UserService {
   static async register(username: string, email: string, password: string): Promise<{ user: Omit<User, 'password_hash'>, token: string }> {
-    try {
-      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-      const user = await prisma.user.create({
-        data: {
-          id: ulid(),
-          username,
-          email,
-          password_hash: passwordHash
-        }
-      });
+    const user = await prisma.user.create({
+      data: {
+        id: ulid(),
+        username,
+        email,
+        password_hash: passwordHash
+      }
+    });
 
-      const token = generateToken(user.id);
+    const token = generateToken(user.id);
 
-      return { user, token };
-    } catch (error) {
-      throw error;
-    }
+    return { user, token };
   }
 
   static async login(usernameOrEmail: string, password: string): Promise<{ user: Omit<User, 'password_hash'>, token: string }> {
@@ -74,7 +70,7 @@ export class UserService {
       data: { password_hash: newPasswordHash }
     });
 
-    return updatedUser as Omit<User, 'password_hash'>;
+    return updatedUser;
   }
 
   static async getUserById(userId: string): Promise<Omit<User, 'password_hash'> | null> {
@@ -104,25 +100,21 @@ export class UserService {
       throw new Error(ErrorType.NO_VALID_UPDATES_PROVIDED);
     }
 
-    try {
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: validUpdates,
-        select: {
-          id: true,
-          username: true,
-          email: true,
-          preferred_language: true,
-          points: true,
-          timezone: true,
-          created_at: true,
-          updated_at: true
-        }
-      });
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: validUpdates,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        preferred_language: true,
+        points: true,
+        timezone: true,
+        created_at: true,
+        updated_at: true
+      }
+    });
 
-      return updatedUser as Omit<User, 'password_hash'>;
-    } catch (error) {
-      throw error;
-    }
+    return updatedUser;
   }
 }

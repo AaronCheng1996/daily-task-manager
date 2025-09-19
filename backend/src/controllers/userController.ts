@@ -80,7 +80,7 @@ const userController = {
     resetPassword: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
             const { oldPassword, newPassword } = z.object({ oldPassword: z.string().min(6), newPassword: z.string().min(6) }).parse(req.body);
-            const updatedUser = await UserService.resetPassword((req as AuthRequest).user!.id, oldPassword, newPassword);
+            const updatedUser = await UserService.resetPassword(req.user!.id, oldPassword, newPassword);
             res.json({ user: updatedUser });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -97,7 +97,7 @@ const userController = {
     },
 
     getProfile: async (req: AuthRequest, res: Response): Promise<void> => {
-        res.json({ user: (req as AuthRequest).user });
+        res.json({ user: req.user });
     },
  
     updateProfile: async (req: AuthRequest, res: Response): Promise<void> => {
@@ -110,7 +110,7 @@ const userController = {
             });
             
             const updates = updateSchema.parse(req.body);
-            const updatedUser = await UserService.updateUser((req as AuthRequest).user!.id, updates);
+            const updatedUser = await UserService.updateUser(req.user!.id, updates);
             
             res.json({
             message: SuccessMessage.USER_PROFILE_UPDATED,

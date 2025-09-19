@@ -52,6 +52,11 @@ export interface RegisterData {
   password: string
 }
 
+export interface ResetPasswordData {
+  oldPassword: string
+  newPassword: string
+}
+
 // Task types
 export interface TaskBase {
   id: string
