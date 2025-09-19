@@ -7,13 +7,15 @@ import './assets/main.css'
 
 // Import locales
 import en from './locales/en.json'
+import zhTW from './locales/zh-TW.json'
 
 const i18n = createI18n({
   legacy: false,
   locale: 'en',
   fallbackLocale: 'en',
   messages: {
-    en
+    en,
+    zhTW
   }
 })
 

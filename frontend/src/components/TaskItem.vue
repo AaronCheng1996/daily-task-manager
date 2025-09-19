@@ -102,7 +102,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { format, isPast, isToday, isTomorrow } from 'date-fns'
+import { format } from 'date-fns'
 import type { Task, TodoTask } from '@/types'
 import { TaskType } from '@/types'
 
@@ -129,7 +129,6 @@ const dueDateText = computed(() => {
   const dueDate = new Date(todoTask.due_at!)
   const now = new Date()
   
-  // 設置時間為當天開始，避免時區問題
   now.setHours(0, 0, 0, 0)
   const dueDateNormalized = new Date(dueDate)
   dueDateNormalized.setHours(0, 0, 0, 0)
@@ -137,61 +136,20 @@ const dueDateText = computed(() => {
   const diffTime = dueDateNormalized.getTime() - now.getTime()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   
-  // 根據規則文檔的顯示要求
   if (diffDays < 0) {
-    // 🔴 已逾期: 顯示逾期日期
     const overdueDays = Math.abs(diffDays)
     return overdueDays === 1 ? '1 day overdue' : `${overdueDays} days overdue`
   } else if (diffDays === 0) {
-    // 🟡 今日到期: 顯示今日到期
     return 'Due today'
   } else if (diffDays === 1) {
-    // 🟢 明日到期: 顯示明日到期
     return 'Due tomorrow'
   } else if (diffDays <= 7) {
-    // 🟡 7天內到期: 顯示剩餘天數
     return `Due in ${diffDays} days`
   } else {
-    // ⏱️ 其他: 僅顯示截止日期
     return `Due ${format(dueDate, 'MMM d')}`
   }
 })
 
-const dueDateClass = computed(() => {
-  if (!showDueDate.value) return ''
-  
-  const todoTask = props.task as TodoTask
-  const dueDate = new Date(todoTask.due_at!)
-  const now = new Date()
-  
-  // 設置時間為當天開始
-  now.setHours(0, 0, 0, 0)
-  const dueDateNormalized = new Date(dueDate)
-  dueDateNormalized.setHours(0, 0, 0, 0)
-  
-  const diffTime = dueDateNormalized.getTime() - now.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
-  // 根據規則文檔的顏色要求
-  if (diffDays < 0 && !props.task.is_completed) {
-    // 🔴 已逾期且未完成: 紅色
-    return 'text-red-600 font-medium'
-  } else if (diffDays === 0) {
-    // 🟡 今日到期: 黃色
-    return 'text-yellow-600 font-medium'
-  } else if (diffDays === 1) {
-    // 🟢 明日到期: 綠色
-    return 'text-green-600'
-  } else if (diffDays <= 7) {
-    // 🟡 7天內到期: 黃色
-    return 'text-yellow-600'
-  } else {
-    // ⏱️ 其他: 灰色
-    return 'text-gray-500'
-  }
-})
-
-// New computed properties for enhanced styling
 const taskTypeBadgeClass = computed(() => {
   const baseClasses = 'text-white'
   switch (props.task.task_type) {

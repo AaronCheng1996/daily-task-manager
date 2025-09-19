@@ -37,7 +37,7 @@ api.interceptors.response.use(
       localStorage.removeItem('user')
       window.location.href = '/login'
     }
-    return Promise.reject(error)
+    return Promise.reject(error instanceof Error ? error : new Error(error.message || 'Request failed'))
   }
 )
 
@@ -142,8 +142,8 @@ export const taskApi = {
     return response.data
   },
 
-  reorderMilestones: async (taskId: string, milestoneId: string, orderIndex: number): Promise<ApiResponse> => {
-    const response = await api.post(`/tasks/${taskId}/milestones/${milestoneId}/reorder`, { orderIndex })
+  reorderMilestones: async (taskId: string, milestoneOrders: Array<{ id: string; order_index: number }>): Promise<ApiResponse> => {
+    const response = await api.post(`/tasks/${taskId}/milestones/reorder`, { milestoneOrders })
     return response.data
   },
 }

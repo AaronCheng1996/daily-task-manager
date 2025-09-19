@@ -66,11 +66,7 @@ const form = reactive({
 })
 
 const handleLogin = async () => {
-  try {
-    await userStore.login(form)
-    router.push('/')
-  } catch (error) {
-    // Error is handled by the store
-  }
+  await userStore.login(form)
+  router.push('/')
 }
 </script>

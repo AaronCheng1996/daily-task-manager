@@ -12,15 +12,16 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "vue": "^3.3.4",
-    "vue-router": "^4.2.4",
-    "pinia": "^2.1.6",
-    "axios": "^1.4.0",
-    "vue-i18n": "^9.4.1",
     "@headlessui/vue": "^1.7.16",
     "@heroicons/vue": "^2.0.18",
+    "axios": "^1.4.0",
     "date-fns": "^2.30.0",
+    "pinia": "^2.1.6",
     "vee-validate": "^4.11.8",
+    "vue": "^3.3.4",
+    "vue-i18n": "^9.4.1",
+    "vue-router": "^4.2.4",
+    "vuedraggable": "^4.1.0",
     "zod": "^3.22.2"
   },
   "devDependencies": {

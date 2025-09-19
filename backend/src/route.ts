@@ -26,6 +26,6 @@ router.post('/tasks/:id/milestones', authenticateToken, milestoneController.crea
 router.patch('/tasks/:id/milestones/:milestoneId', authenticateToken, milestoneController.updateMilestone);
 router.delete('/tasks/:id/milestones/:milestoneId', authenticateToken, milestoneController.deleteMilestone);
 router.post('/tasks/:id/milestones/:milestoneId/toggle', authenticateToken, milestoneController.toggleMilestoneCompletion);
-router.post('/tasks/:id/milestones/:milestoneId/reorder', authenticateToken, milestoneController.reorderMilestones);
+router.post('/tasks/:id/milestones/reorder', authenticateToken, milestoneController.reorderMilestones);
 
 export default router;

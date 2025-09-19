@@ -106,42 +106,51 @@
     </div>
 
     <!-- Tasks List -->
-    <div v-else-if="filteredTasks.length > 0" class="space-y-4">
-      <template v-for="(task, index) in filteredTasks" :key="task.id">
-        <div 
-          class="animate-slide-up"
-          :style="`animation-delay: ${Math.min(index * 0.1, 1)}s;`"
-        >
-          <HabitTaskItem
-            v-if="task.task_type === TaskType.HABIT"
-            :habit="task as HabitTask"
-            @edit="handleEditTask"
-            @delete="handleDeleteTask"
-            @updated="handleTaskUpdated"
-          />
-          <DailyTaskItem
-            v-else-if="task.task_type === TaskType.DAILY_TASK"
-            :task="task as DailyTask"
-            @edit="handleEditTask"
-            @delete="handleDeleteTask"
-            @updated="handleTaskUpdated"
-          />
-          <LongTermTaskItem
-            v-else-if="task.task_type === TaskType.LONG_TERM"
-            :task="task as LongTermTask"
-            @edit="handleEditTask"
-            @delete="handleDeleteTask"
-            @updated="handleTaskUpdated"
-          />
-          <TaskItem
-            v-else
-            :task="task"
-            @toggle="handleToggleTask"
-            @edit="handleEditTask"
-            @delete="handleDeleteTask"
-          />
-        </div>
-      </template>
+    <div v-else-if="filteredTasks.length > 0">
+      <draggable
+        v-model="filteredTasks"
+        item-key="id"
+        @end="saveTasksOrder"
+        class="space-y-4"
+      >
+        <template #item="{ element, index }">
+          <div
+            :id="element.id"
+            :data-order-index="element.order_index"
+            class="animate-slide-up"
+            :style="`animation-delay: ${Math.min(index * 0.1, 1)}s;`"
+          >
+            <HabitTaskItem
+              v-if="element.task_type === TaskType.HABIT"
+              :habit="element as HabitTask"
+              @edit="handleEditTask"
+              @delete="handleDeleteTask"
+              @updated="handleTaskUpdated"
+            />
+            <DailyTaskItem
+              v-else-if="element.task_type === TaskType.DAILY_TASK"
+              :task="element as DailyTask"
+              @edit="handleEditTask"
+              @delete="handleDeleteTask"
+              @updated="handleTaskUpdated"
+            />
+            <LongTermTaskItem
+              v-else-if="element.task_type === TaskType.LONG_TERM"
+              :task="element as LongTermTask"
+              @edit="handleEditTask"
+              @delete="handleDeleteTask"
+              @updated="handleTaskUpdated"
+            />
+            <TaskItem
+              v-else
+              :task="element"
+              @toggle="handleToggleTask"
+              @edit="handleEditTask"
+              @delete="handleDeleteTask"
+            />
+          </div>
+        </template>
+      </draggable>
     </div>
 
     <!-- Empty State -->
@@ -192,6 +201,7 @@
 </template>
 
 <script setup lang="ts">
+import draggable from "vuedraggable";
 import { ref, computed, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/taskStore'
 import { TaskType } from '@/types'
@@ -203,6 +213,7 @@ import LongTermTaskItem from '@/components/LongTermTaskItem.vue'
 import CreateTaskModal from '@/components/CreateTaskModal.vue'
 import EditTaskModal from '@/components/EditTaskModal.vue'
 import TaskStatusDropdown from '@/components/TaskStatusDropdown.vue'
+import { taskApi } from '@/utils/api'
 
 const taskStore = useTaskStore()
 const showCreateTask = ref(false)
@@ -257,7 +268,7 @@ const filteredTasks = computed(() => {
       tasks = taskStore.tasksByType(TaskType.LONG_TERM)
       break
     default:
-      tasks = taskStore.tasks
+      tasks = taskStore.sortedTasks
       break
   }
 
@@ -314,6 +325,27 @@ const handleTaskRefresh = () => {
   if (!taskStore.loading) {
     taskStore.fetchTasks()
   }
+}
+
+const saveTasksOrder = async (event: any) => {
+  const newIndex = event.newIndex;
+  const container = event.to;
+  const movedEl: HTMLElement = event.item;
+  const movedIdStr = movedEl.id;
+  if (!movedIdStr) {
+    throw new Error("Dragged element missing data-id attribute");
+  }
+  const prevDom = container.children[newIndex - 1] as HTMLElement | undefined;
+  const nextDom = container.children[newIndex + 1] as HTMLElement | undefined;
+  const prevOrderIndex = prevDom && prevDom.dataset.orderIndex !== undefined
+      ? Number(prevDom.dataset.orderIndex)
+      : null;
+  const nextOrderIndex = nextDom && nextDom.dataset.orderIndex !== undefined
+      ? Number(nextDom.dataset.orderIndex)
+      : null;
+  console.log(movedIdStr, prevOrderIndex, nextOrderIndex)
+  await taskApi.reorderTasks(movedIdStr, prevOrderIndex, nextOrderIndex)
+  taskStore.fetchTasks()
 }
 
 onMounted(() => {

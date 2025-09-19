@@ -124,8 +124,8 @@ export class DailyTaskService {
     }
   }> {
     const dailyTask = task as DailyTask;
-    const startOfDay = moment(targetDate).startOf('day');
-    const endOfDay = moment(targetDate).endOf('day');
+    const startOfDay = moment(targetDate).startOf('day').toDate();
+    const endOfDay = moment(targetDate).endOf('day').toDate();
 
     if (!this.shouldTaskAppearOnDate(dailyTask, targetDate)) {
       throw new Error(ErrorType.BAD_REQUEST);
@@ -135,8 +135,8 @@ export class DailyTaskService {
       where: { 
         task_id: task.id, 
         completion_at: {
-          gte: startOfDay.toDate(),
-          lte: endOfDay.toDate()
+          gte: startOfDay,
+          lte: endOfDay
         }
       }
     });
@@ -154,7 +154,7 @@ export class DailyTaskService {
     } else {
       newCompletionStatus = true;
       await prisma.completionHistory.create({
-        data: { id: ulid(), task_id: task.id, completion_at: startOfDay.toDate(), is_completed: newCompletionStatus, recorded_at: moment().toDate() }
+        data: { id: ulid(), task_id: task.id, completion_at: startOfDay, is_completed: newCompletionStatus, recorded_at: moment().toDate() }
       });
     }
 

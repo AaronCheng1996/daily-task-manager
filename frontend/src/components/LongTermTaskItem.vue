@@ -1,7 +1,6 @@
 <template>
   <div class="longterm-task-item border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
     <div class="space-y-4">
-      <!-- 任務標題和基本信息 -->
       <div class="flex items-center justify-between">
         <div class="flex-1">
           <div class="flex items-center space-x-2">
@@ -23,7 +22,6 @@
             {{ task.description }}
           </p>
 
-          <!-- 目標日期和統計信息 -->
           <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
             <span v-if="task.target_completion_at">
               Target: {{ formatDate(task.target_completion_at) }}
@@ -38,7 +36,6 @@
           </div>
         </div>
 
-        <!-- 操作按鈕 -->
         <div class="flex items-center space-x-2">
           <button
             @click="showMilestones = !showMilestones"
@@ -73,7 +70,6 @@
         </div>
       </div>
 
-      <!-- 進度條 -->
       <div v-if="task.show_progress && statistics" class="space-y-2">
         <div class="flex justify-between text-sm">
           <span class="text-gray-600">Progress</span>
@@ -90,7 +86,6 @@
         </div>
       </div>
 
-      <!-- 里程碑列表 -->
       <div v-if="showMilestones" class="space-y-3 border-t border-gray-100 pt-4">
         <div class="flex items-center justify-between">
           <h4 class="text-sm font-medium text-gray-700">Milestones</h4>
@@ -102,7 +97,6 @@
           </button>
         </div>
 
-        <!-- 新增里程碑表單 -->
         <div v-if="showAddMilestone" class="bg-gray-50 p-3 rounded border">
           <div class="space-y-2">
             <input
@@ -135,99 +129,101 @@
           </div>
         </div>
 
-        <!-- 里程碑列表 -->
         <div v-if="milestones.length > 0" class="space-y-2">
-          <div 
-            v-for="milestone in milestones" 
-            :key="milestone.id"
-            class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50 transition-colors"
+          <draggable
+            v-model="milestones"
+            item-key="id"
+            @end="saveMilestonesOrder"
+            handle=".task-handle"
           >
-            <!-- 里程碑完成按鈕 -->
-            <button
-              @click="toggleMilestone(milestone.id)"
-              :disabled="loadingMilestone"
-              class="flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
-              :class="milestone.is_completed 
-                ? 'bg-purple-500 border-purple-500 text-white' 
-                : 'border-gray-300 hover:border-purple-500'"
-            >
-              <svg v-if="milestone.is_completed" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-            </button>
+            <template #item="{ element }">
+              <div 
+                :key="element.id"
+                class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50 transition-colors"
+              >
+                <div class="task-handle cursor-move">⠿</div>
+                <button
+                  @click="toggleMilestone(element.id)"
+                  :disabled="loadingMilestone"
+                  class="flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+                  :class="element.is_completed 
+                    ? 'bg-purple-500 border-purple-500 text-white' 
+                    : 'border-gray-300 hover:border-purple-500'"
+                >
+                  <svg v-if="element.is_completed" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
 
-            <!-- 里程碑內容 -->
-            <div class="flex-1 min-w-0">
-              <!-- 編輯模式 -->
-              <div v-if="editingMilestone?.id === milestone.id" class="space-y-2">
-                <input
-                  v-model="editMilestoneForm.title"
-                  class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Milestone title"
-                  @keyup.enter="saveEditMilestone"
-                />
-                <textarea
-                  v-model="editMilestoneForm.description"
-                  class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  rows="2"
-                  placeholder="Description (optional)"
-                ></textarea>
-                <div class="flex space-x-2">
+                <div class="flex-1 min-w-0">
+                  <div v-if="editingMilestone?.id === element.id" class="space-y-2">
+                    <input
+                      v-model="editMilestoneForm.title"
+                      class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Milestone title"
+                      @keyup.enter="saveEditMilestone"
+                    />
+                    <textarea
+                      v-model="editMilestoneForm.description"
+                      class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      rows="2"
+                      placeholder="Description (optional)"
+                    ></textarea>
+                    <div class="flex space-x-2">
+                      <button
+                        @click="saveEditMilestone"
+                        :disabled="!editMilestoneForm.title.trim() || loadingMilestone"
+                        class="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {{ loadingMilestone ? 'Saving...' : 'Save' }}
+                      </button>
+                      <button
+                        @click="cancelEditMilestone"
+                        class="text-xs px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div v-else>
+                    <h5 class="text-sm font-medium" :class="{ 'line-through text-gray-500': element.is_completed }">
+                      {{ element.title }}
+                    </h5>
+                    <p v-if="element.description" class="text-xs text-gray-600 mt-1">
+                      {{ element.description }}
+                    </p>
+                    <span v-if="element.completion_at" class="text-xs text-gray-400">
+                      Completed: {{ formatDate(element.completion_at) }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-1">
                   <button
-                    @click="saveEditMilestone"
-                    :disabled="!editMilestoneForm.title.trim() || loadingMilestone"
-                    class="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                    @click="startEditMilestone(element)"
+                    class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Edit milestone"
                   >
-                    {{ loadingMilestone ? 'Saving...' : 'Save' }}
+                    <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.828-2.828z" />
+                    </svg>
                   </button>
                   <button
-                    @click="cancelEditMilestone"
-                    class="text-xs px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                    @click="deleteMilestone(element.id)"
+                    class="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete milestone"
                   >
-                    Cancel
+                    <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
                   </button>
                 </div>
               </div>
-              
-              <!-- 顯示模式 -->
-              <div v-else>
-                <h5 class="text-sm font-medium" :class="{ 'line-through text-gray-500': milestone.is_completed }">
-                  {{ milestone.title }}
-                </h5>
-                <p v-if="milestone.description" class="text-xs text-gray-600 mt-1">
-                  {{ milestone.description }}
-                </p>
-                <span v-if="milestone.completion_at" class="text-xs text-gray-400">
-                  Completed: {{ formatDate(milestone.completion_at) }}
-                </span>
-              </div>
-            </div>
-
-            <!-- 里程碑操作按鈕 -->
-            <div class="flex items-center space-x-1">
-              <button
-                @click="startEditMilestone(milestone)"
-                class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                title="Edit milestone"
-              >
-                <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.828-2.828z" />
-                </svg>
-              </button>
-              <button
-                @click="deleteMilestone(milestone.id)"
-                class="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                title="Delete milestone"
-              >
-                <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-              </button>
-            </div>
-          </div>
+            </template>
+          </draggable>
         </div>
         
-        <!-- 空狀態 -->
         <div v-else class="text-center py-4 text-gray-500">
           <p class="text-sm">No milestones yet</p>
           <button
@@ -243,6 +239,7 @@
 </template>
 
 <script setup lang="ts">
+import draggable from "vuedraggable";
 import { ref, computed, onMounted } from 'vue'
 import { format, parseISO } from 'date-fns'
 import type { LongTermTask, LongTermTaskStatistics, Milestone } from '@/types'
@@ -336,10 +333,8 @@ const createMilestone = async () => {
       order_index: milestones.value.length
     })
     
-    // 直接更新本地狀態，避免重新載入
     milestones.value.push(response.milestone)
     
-    // 重新計算統計數據
     if (statistics.value) {
       statistics.value.totalMilestones = milestones.value.length
       statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
@@ -348,12 +343,8 @@ const createMilestone = async () => {
         : 0
     }
     
-    // 重置表單
     newMilestone.value = { title: '', description: '' }
     showAddMilestone.value = false
-    
-    // 只在需要時通知父組件更新（不頻繁調用）
-    // emit('updated')
   } catch (error) {
     console.error('Failed to create milestone:', error)
     alert('Failed to create milestone')
@@ -368,7 +359,6 @@ const toggleMilestone = async (milestoneId: string) => {
   try {
     await taskApi.toggleMilestoneCompletion(milestoneId, props.task.id)
     
-    // 更新本地里程碑狀態
     const milestone = milestones.value.find(m => m.id === milestoneId)
     if (milestone) {
       milestone.is_completed = !milestone.is_completed
@@ -379,16 +369,12 @@ const toggleMilestone = async (milestoneId: string) => {
       }
     }
     
-    // 重新計算統計數據
     if (statistics.value) {
       statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
       statistics.value.progress = statistics.value.totalMilestones > 0 
         ? Number(((statistics.value.completedMilestones / statistics.value.totalMilestones) * 100).toFixed(2))
         : 0
     }
-    
-    // 不需要頻繁通知父組件
-    // emit('updated')
   } catch (error) {
     console.error('Failed to toggle milestone:', error)
     alert('Failed to update milestone')
@@ -405,13 +391,11 @@ const deleteMilestone = async (milestoneId: string) => {
   try {
     await taskApi.deleteMilestone(milestoneId, props.task.id)
     
-    // 從本地列表中移除里程碑
     const index = milestones.value.findIndex(m => m.id === milestoneId)
     if (index > -1) {
       milestones.value.splice(index, 1)
     }
     
-    // 重新計算統計數據
     if (statistics.value) {
       statistics.value.totalMilestones = milestones.value.length
       statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
@@ -419,8 +403,6 @@ const deleteMilestone = async (milestoneId: string) => {
         ? Number(((statistics.value.completedMilestones / statistics.value.totalMilestones) * 100).toFixed(2))
         : 0
     }
-    
-    // emit('updated') // 避免頻繁更新
   } catch (error) {
     console.error('Failed to delete milestone:', error)
     alert('Failed to delete milestone')
@@ -454,7 +436,6 @@ const saveEditMilestone = async () => {
       description: editMilestoneForm.value.description || undefined
     })
     
-    // 直接更新本地里程碑數據
     const milestone = milestones.value.find(m => m.id === editingMilestone.value!.id)
     if (milestone) {
       milestone.title = editMilestoneForm.value.title
@@ -462,7 +443,6 @@ const saveEditMilestone = async () => {
     }
     
     editingMilestone.value = null
-    // emit('updated') // 避免頻繁更新
   } catch (error) {
     console.error('Failed to update milestone:', error)
     alert('Failed to update milestone')
@@ -493,7 +473,19 @@ const formatProgress = (progress: number): string => {
   return progress.toFixed(2)
 }
 
-// 組件載入時獲取數據
+const saveMilestonesOrder = async () => {
+  const reordered = milestones.value.map((m, idx) => ({
+    id: m.id,
+    order_index: idx,
+  }));
+
+  milestones.value.forEach((m, idx) => {
+    m.order_index = idx;
+  });
+
+  await taskApi.reorderMilestones(props.task.id, reordered);
+}
+
 onMounted(() => {
   loadData()
 })

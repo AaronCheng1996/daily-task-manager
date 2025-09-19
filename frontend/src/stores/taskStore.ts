@@ -8,16 +8,20 @@ export const useTaskStore = defineStore('task', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  const sortedTasks = computed(() => {
+    return tasks.value.sort((a, b) => a.order_index - b.order_index)
+  })
+
   const tasksByType = computed(() => {
-    return (type: TaskType) => tasks.value.filter(task => task.task_type === type)
+    return (type: TaskType) => sortedTasks.value.filter(task => task.task_type === type)
   })
 
   const completedTasks = computed(() => {
-    return tasks.value.filter(task => task.is_completed)
+    return sortedTasks.value.filter(task => task.is_completed)
   })
 
   const incompleteTasks = computed(() => {
-    return tasks.value.filter(task => !task.is_completed)
+    return sortedTasks.value.filter(task => !task.is_completed)
   })
 
   const fetchTasks = async (force = false) => {
@@ -110,6 +114,7 @@ export const useTaskStore = defineStore('task', () => {
     tasks,
     loading,
     error,
+    sortedTasks,
     tasksByType,
     completedTasks,
     incompleteTasks,

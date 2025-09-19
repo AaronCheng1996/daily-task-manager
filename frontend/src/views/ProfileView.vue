@@ -36,7 +36,7 @@
             </label>
             <select v-model="form.preferred_language" class="form-input">
               <option value="en">English</option>
-              <!-- Add more languages as needed -->
+              <option value="zhTW">Traditional Chinese</option>
             </select>
           </div>
 
@@ -50,7 +50,7 @@
               <option value="America/Los_Angeles">Pacific Time</option>
               <option value="Europe/London">London</option>
               <option value="Asia/Tokyo">Tokyo</option>
-              <!-- Add more timezones as needed -->
+              <option value="Asia/Taipei">Taipei</option>
             </select>
           </div>
         </div>
