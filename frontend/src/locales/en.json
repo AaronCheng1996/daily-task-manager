@@ -59,6 +59,10 @@
     "title": "Profile",
     "updateProfile": "Update Profile",
     "language": "Language",
-    "timezone": "Timezone"
+    "timezone": "Timezone",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password"
   }
 }

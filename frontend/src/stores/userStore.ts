@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { User, LoginCredentials, RegisterData } from '@/types'
+import type { User, LoginCredentials, RegisterData, ResetPasswordData } from '@/types'
 import { authApi } from '@/utils/api'
 
 export const useUserStore = defineStore('user', () => {
@@ -93,6 +93,21 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const resetPassword = async (data: ResetPasswordData) => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const response = await authApi.resetPassword(data)
+      return response
+    } catch (err: any) {
+      error.value = err.response?.data?.error || 'Password reset failed'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     user,
     token,
@@ -105,6 +120,7 @@ export const useUserStore = defineStore('user', () => {
     login,
     register,
     logout,
-    updateProfile
+    updateProfile,
+    resetPassword
   }
 })

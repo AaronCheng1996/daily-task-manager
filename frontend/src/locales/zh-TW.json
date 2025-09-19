@@ -59,6 +59,10 @@
     "title": "個人設定",
     "updateProfile": "更新個人設定",
     "language": "語言",
-    "timezone": "時區"
+    "timezone": "時區",
+    "changePassword": "更改密碼",
+    "currentPassword": "目前密碼",
+    "newPassword": "新密碼",
+    "confirmNewPassword": "確認新密碼"
   }
 }
