@@ -93,6 +93,4 @@ VITE_API_URL=http://localhost:3001/api
 ```
 
 ### Todo
-- Update status of Daily Task when date changed or app start
-- Change Task's background color and disable Done button if the Daily Task is not triggered Today. also make two toggle button that filter triggered and Completed Task on the page instead of using different Pages
 - Reward point system

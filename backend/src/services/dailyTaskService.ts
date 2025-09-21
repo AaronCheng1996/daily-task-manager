@@ -1,4 +1,4 @@
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { ulid } from 'ulid';
 import { RecurrenceType, Task, TaskType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
@@ -351,5 +351,50 @@ export class DailyTaskService {
       recentHistory: recentHistory.reverse(),
       nextOccurrence: nextOccurrence.toISOString().split('T')[0]
     };
+  }
+
+  static async checkAndRefreshDailyTaskForUser(userId: string, timezone: string): Promise<void> {
+    const tasks = await prisma.task.findMany({
+      where: { user_id: userId, task_type: TaskType.DAILY_TASK },
+    });
+
+    const userMoment = moment().tz(timezone);
+    const today = userMoment.toDate();
+    today.setHours(0, 0, 0, 0);
+
+    for (const task of tasks) {
+      const dailyTask = task as DailyTask;
+      
+      // Check if this task should appear today
+      if (!this.shouldTaskAppearOnDate(dailyTask, today)) {
+        continue;
+      }
+
+      // Check if there's already a completion history for today
+      const todayStart = moment(today).startOf('day').toDate();
+      const todayEnd = moment(today).endOf('day').toDate();
+
+      const existingHistory = await prisma.completionHistory.findFirst({
+        where: { 
+          task_id: task.id, 
+          completion_at: {
+            gte: todayStart,
+            lte: todayEnd
+          }
+        }
+      });
+
+      // If no history exists for today, ensure the task is marked as not completed
+      // This allows users to complete the task again on days when it should appear
+      if (!existingHistory && task.is_completed) {
+        await prisma.task.update({
+          where: { id: task.id },
+          data: { 
+            is_completed: false,
+            updated_at: moment().toDate()
+          }
+        });
+      }
+    }
   }
 }

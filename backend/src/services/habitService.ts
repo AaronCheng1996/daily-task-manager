@@ -1,4 +1,4 @@
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { ulid } from 'ulid';
 import { HabitType, Task, TimeRangeType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';

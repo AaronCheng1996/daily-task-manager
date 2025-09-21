@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import morgan from 'morgan';
 
 import { initDatabase } from './config/database';

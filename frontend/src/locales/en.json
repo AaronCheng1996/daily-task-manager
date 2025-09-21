@@ -47,6 +47,12 @@
       "DAILY_TASK": "Daily Task",
       "TODO": "Todo",
       "LONG_TERM": "Long-term"
+    },
+    "recurrence": {
+      "selectDaysOfWeek": "Select Days of Week",
+      "selectDaysOfMonth": "Select Days of Month",
+      "selectWeeksOfMonth": "Select Weeks of Month",
+      "lastDayOfMonth": "Last day of month"
     }
   },
   "navigation": {

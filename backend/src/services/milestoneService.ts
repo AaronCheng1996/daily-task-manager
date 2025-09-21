@@ -2,7 +2,7 @@ import { ulid } from 'ulid';
 import { Milestone, Task, TaskType } from '../generated/prisma';
 import { ErrorType } from '../utils/messages.enum';
 import { prisma } from '../utils/prisma';
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 export class MilestoneService {
   /**

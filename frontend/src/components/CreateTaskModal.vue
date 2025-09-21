@@ -113,6 +113,9 @@
                 <option value="EVERY_X_DAYS">Every X Days</option>
                 <option value="EVERY_X_WEEKS">Every X Weeks</option>
                 <option value="EVERY_X_MONTHS">Every X Months</option>
+                <option value="WEEKLY_ON_DAYS">Weekly on Specific Days</option>
+                <option value="MONTHLY_ON_DAYS">Monthly on Specific Days</option>
+                <option value="WEEK_OF_MONTH_ON_DAYS">Specific Week Days of Month</option>
               </select>
             </div>
             <div v-if="form.is_recurring && ['EVERY_X_DAYS', 'EVERY_X_WEEKS', 'EVERY_X_MONTHS'].includes(form.recurrence_type)">
@@ -126,6 +129,93 @@
                 class="form-input"
                 placeholder="e.g., 2 for every 2 days"
               />
+            </div>
+            
+            <!-- Weekday selection for WEEKLY_ON_DAYS and WEEK_OF_MONTH_ON_DAYS -->
+            <div v-if="form.is_recurring && ['WEEKLY_ON_DAYS', 'WEEK_OF_MONTH_ON_DAYS'].includes(form.recurrence_type)">
+              <div class="section-header">
+                <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="section-title">{{ $t('tasks.recurrence.selectDaysOfWeek') }}</span>
+              </div>
+              <div class="day-selector p-4">
+                <div class="grid grid-cols-7 gap-2">
+                  <div 
+                    v-for="(day, index) in weekdays" 
+                    :key="index" 
+                    class="day-item"
+                    :class="{ selected: form.recurrence_days_of_week.includes(index) }"
+                    @click="toggleDayOfWeek(index)"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="index"
+                      v-model="form.recurrence_days_of_week"
+                      class="hidden"
+                    />
+                    <div class="day-label">{{ day }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Day of month selection for MONTHLY_ON_DAYS -->
+            <div v-if="form.is_recurring && form.recurrence_type === 'MONTHLY_ON_DAYS'">
+              <div class="section-header">
+                <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span class="section-title">{{ $t('tasks.recurrence.selectDaysOfMonth') }}</span>
+              </div>
+              <div class="day-selector p-4 mb-4">
+                <div class="grid grid-cols-8 gap-1">
+                  <div 
+                    v-for="day in 31" 
+                    :key="day" 
+                    class="day-item"
+                    :class="{ selected: form.recurrence_days_of_month.includes(day) }"
+                    @click="toggleDayOfMonth(day)"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="day"
+                      v-model="form.recurrence_days_of_month"
+                      class="hidden"
+                    />
+                    <div class="day-number">{{ day }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Week of month selection for WEEK_OF_MONTH_ON_DAYS -->
+            <div v-if="form.is_recurring && form.recurrence_type === 'WEEK_OF_MONTH_ON_DAYS'">
+              <div class="section-header">
+                <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span class="section-title">{{ $t('tasks.recurrence.selectWeeksOfMonth') }}</span>
+              </div>
+              <div class="week-selector p-4">
+                <div class="grid grid-cols-4 gap-3">
+                  <div 
+                    v-for="week in 4" 
+                    :key="week" 
+                    class="week-item"
+                    :class="{ selected: form.recurrence_weeks_of_month.includes(week) }"
+                    @click="toggleWeekOfMonth(week)"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="week"
+                      v-model="form.recurrence_weeks_of_month"
+                      class="hidden"
+                    />
+                    <div class="week-number">{{ week }}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -236,6 +326,46 @@ const taskStore = useTaskStore()
 const loading = ref(false)
 const error = ref<string | null>(null)
 
+const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+
+// Helper methods for handling selections
+const toggleDayOfWeek = (index: number) => {
+  const indexInArray = form.recurrence_days_of_week.indexOf(index)
+  if (indexInArray > -1) {
+    form.recurrence_days_of_week.splice(indexInArray, 1)
+  } else {
+    form.recurrence_days_of_week.push(index)
+  }
+}
+
+const toggleDayOfMonth = (day: number) => {
+  const indexInArray = form.recurrence_days_of_month.indexOf(day)
+  if (indexInArray > -1) {
+    form.recurrence_days_of_month.splice(indexInArray, 1)
+  } else {
+    form.recurrence_days_of_month.push(day)
+  }
+}
+
+const toggleWeekOfMonth = (week: number) => {
+  const indexInArray = form.recurrence_weeks_of_month.indexOf(week)
+  if (indexInArray > -1) {
+    form.recurrence_weeks_of_month.splice(indexInArray, 1)
+  } else {
+    form.recurrence_weeks_of_month.push(week)
+  }
+}
+
+const toggleSpecialDay = (value: number) => {
+  // Fix: Only toggle the special day (-1), don't affect other selections
+  const indexInArray = form.recurrence_days_of_month.indexOf(value)
+  if (indexInArray > -1) {
+    form.recurrence_days_of_month.splice(indexInArray, 1)
+  } else {
+    form.recurrence_days_of_month.push(value)
+  }
+}
+
 const form = reactive({
   title: '',
   description: '',
@@ -253,9 +383,9 @@ const form = reactive({
   is_recurring: true,
   recurrence_type: 'DAILY',
   recurrence_interval: 1,
-  recurrence_days_of_week: [],
-  recurrence_days_of_month: [],
-  recurrence_weeks_of_month: [],
+  recurrence_days_of_week: [] as number[],
+  recurrence_days_of_month: [] as number[],
+  recurrence_weeks_of_month: [] as number[],
   // LONG_TERM fields
   show_progress: true,
   target_completion_at: ''

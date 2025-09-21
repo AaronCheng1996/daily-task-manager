@@ -14,9 +14,6 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
-    "test": "npm run test:frontend && npm run test:backend",
-    "test:frontend": "cd frontend && npm test",
-    "test:backend": "cd backend && npm test",
     "install:all": "npm install && npm run install:frontend && npm run install:backend",
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && npm install",
@@ -35,13 +32,5 @@
     "docker"
   ],
   "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "@types/moment-timezone": "^0.5.13",
-    "moment": "^2.30.1",
-    "moment-timezone": "^0.6.0",
-    "prisma": "^6.16.1",
-    "ulid": "^3.0.1",
-    "winston": "^3.17.0"
-  }
+  "license": "MIT"
 }

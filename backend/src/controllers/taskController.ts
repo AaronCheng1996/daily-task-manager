@@ -2,9 +2,11 @@ import { Response } from 'express';
 import { z } from 'zod';
 import { HabitType, RecurrenceType, TaskType, TimeRangeType } from '../generated/prisma';
 import { TaskService } from '../services/taskService';
+import { DailyTaskService } from '../services/dailyTaskService';
 import { AuthRequest } from '../utils/auth';
 import logger from '../utils/logger';
 import { ErrorType, SuccessMessage } from '../utils/messages.enum';
+import { prisma } from '../utils/prisma';
 
 const createTaskSchema = z.object({
     title: z.string().min(1).max(255),
@@ -31,9 +33,37 @@ const createTaskSchema = z.object({
     target_completion_at: z.string().datetime().optional()
 });
 
+const dailyTaskRefreshCache = new Map<string, number>();
+const REFRESH_COOLDOWN_MINUTES = 10;
+
+const checkAndRefreshDailyTasks = async (userId: string): Promise<void> => {
+    const now = Date.now();
+    const lastRefresh = dailyTaskRefreshCache.get(userId) || 0;
+    const cooldownMs = REFRESH_COOLDOWN_MINUTES * 60 * 1000;
+
+    if (now - lastRefresh < cooldownMs) {
+        return;
+    }
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { timezone: true }
+        });
+
+        if (user) {
+            await DailyTaskService.checkAndRefreshDailyTaskForUser(userId, user.timezone);
+            dailyTaskRefreshCache.set(userId, now);
+        }
+    } catch (error) {
+        logger.error('Error refreshing daily tasks:', error);
+    }
+};
+
 const taskController = {
     getTasks: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
+            await checkAndRefreshDailyTasks(req.user!.id);
             const tasks = await TaskService.getUserTasks(req.user!.id);
             res.json({ tasks });
         } catch (error) {
