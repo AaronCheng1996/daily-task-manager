@@ -60,7 +60,6 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
-    // 不設置 loading 狀態，避免影響 fetchTasks 的防重複邏輯
     error.value = null
     
     try {

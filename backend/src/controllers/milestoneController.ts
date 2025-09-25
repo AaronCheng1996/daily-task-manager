@@ -27,8 +27,8 @@ const milestoneController = {
         try {
             const rawData = req.body.milestoneData || req.body;
             const milestoneData = createMilestoneSchema.parse(rawData);
-            await MilestoneService.createMilestone(req.params.id, milestoneData);
-            res.json({ message: SuccessMessage.MILESTONE_CREATED });
+            const milestone = await MilestoneService.createMilestone(req.params.id, milestoneData);
+            res.json({ message: SuccessMessage.MILESTONE_CREATED, milestone });
         } catch (error) {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ 
@@ -56,8 +56,8 @@ const milestoneController = {
         try {
             const rawData = req.body.milestoneData || req.body;
             const milestoneData = updateMilestoneSchema.parse(rawData);
-            await MilestoneService.updateMilestone(req.params.id, milestoneData);
-            res.json({ message: SuccessMessage.MILESTONE_UPDATED });
+            const milestone = await MilestoneService.updateMilestone(req.params.id, milestoneData);
+            res.json({ message: SuccessMessage.MILESTONE_UPDATED, milestone });
         } catch (error) {
             if (error instanceof z.ZodError) {
                 res.status(400).json({ 

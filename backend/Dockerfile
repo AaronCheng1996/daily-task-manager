@@ -41,7 +41,6 @@ EXPOSE 3001
 # Start the application in development mode
 CMD ["npm", "run", "dev"]
 
-# Production stage
 FROM node:18-alpine AS production
 
 WORKDIR /app
@@ -54,12 +53,18 @@ RUN if [ -f package-lock.json ]; then npm ci --omit=dev; else npm install --prod
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
-
-# Copy any other necessary files (if any)
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src/generated ./src/generated
+
+# Copy generated Prisma client to the location expected by compiled JS
+COPY --from=builder /app/src/generated ./dist/generated
+
+# Generate Prisma Client (in case it's needed for runtime)
+RUN npx prisma generate
 
 # Expose port
 EXPOSE 3001
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application with migration
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]

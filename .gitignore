@@ -46,3 +46,6 @@ temp/
 # Testing
 coverage/
 .nyc_output/
+
+# Deployment
+deploy.md

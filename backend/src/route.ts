@@ -6,6 +6,10 @@ import milestoneController from './controllers/milestoneController';
 
 const router = express.Router();
 
+router.get('/health', (req, res) => {
+  res.status(200).json({ message: 'OK' });
+});
+
 router.post('/register',  userController.register);
 router.post('/login', userController.login);
 router.get('/profile', authenticateToken, userController.getProfile);

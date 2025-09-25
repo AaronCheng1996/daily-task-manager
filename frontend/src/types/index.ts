@@ -78,6 +78,7 @@ export interface HabitTask extends TaskBase {
   time_range_value: number
   time_range_type: TimeRangeType
   last_completion_at?: string
+  stat?: HabitStatistics
 }
 
 export interface DailyTask extends TaskBase {
@@ -93,6 +94,7 @@ export interface DailyTask extends TaskBase {
   current_consecutive_missed: number
   max_consecutive_completed: number
   last_reset_at?: string
+  stat?: DailyTaskStatistics
 }
 
 export interface TodoTask extends TaskBase {
@@ -106,6 +108,8 @@ export interface LongTermTask extends TaskBase {
   progress: number
   show_progress: boolean
   target_completion_at?: string
+  stat?: LongTermTaskStatistics
+  milestones?: Milestone[]
 }
 
 export type Task = HabitTask | DailyTask | TodoTask | LongTermTask

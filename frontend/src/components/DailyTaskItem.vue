@@ -2,7 +2,6 @@
   <div class="daily-task-item border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <!-- 任務完成按鈕 -->
         <button
           @click="handleToggleCompletion"
           :disabled="loading"
@@ -34,35 +33,32 @@
             {{ task.description }}
           </p>
 
-          <!-- 重複設定顯示 -->
           <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
             <span>{{ getRecurrenceDescription() }}</span>
-            <span v-if="statistics?.nextOccurrence">
-              Next: {{ formatDate(statistics.nextOccurrence) }}
+            <span v-if="task.stat?.nextOccurrence">
+              Next: {{ formatDate(task.stat.nextOccurrence) }}
             </span>
           </div>
           
-          <!-- 統計信息 -->
-          <div v-if="statistics" class="mt-2 space-y-1">
+          <div v-if="task.stat" class="mt-2 space-y-1">
             <div class="flex items-center space-x-4 text-sm">
               <span class="text-gray-600">
-                Rate: <span class="font-medium text-blue-600">{{ statistics.completionRate }}%</span>
+                Rate: <span class="font-medium text-blue-600">{{ task.stat.completionRate }}%</span>
               </span>
               <span class="text-gray-600">
-                Streak: <span class="font-medium" :class="streakClass">{{ statistics.currentStreak }}</span>
+                Streak: <span class="font-medium" :class="streakClass">{{ task.stat.currentStreak }}</span>
               </span>
               <span class="text-gray-600">
-                Best: <span class="font-medium text-green-600">{{ statistics.longestStreak }}</span>
+                Best: <span class="font-medium text-green-600">{{ task.stat.longestStreak }}</span>
               </span>
-              <span v-if="statistics.missedStreak > 0" class="text-gray-600">
-                Missed: <span class="font-medium text-red-500">{{ statistics.missedStreak }}</span>
+              <span v-if="task.stat.missedStreak > 0" class="text-gray-600">
+                Missed: <span class="font-medium text-red-500">{{ task.stat.missedStreak }}</span>
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 操作按鈕 -->
       <div class="flex items-center space-x-2">
         <button
           @click="showStatistics = !showStatistics"
@@ -93,14 +89,12 @@
       </div>
     </div>
 
-    <!-- 詳細統計展開區 -->
-    <div v-if="showStatistics && statistics" class="mt-4 pt-4 border-t border-gray-100">
+    <div v-if="showStatistics && task.stat" class="mt-4 pt-4 border-t border-gray-100">
       <h4 class="text-sm font-medium text-gray-700 mb-2">Recent History (30 days)</h4>
       
-      <!-- 最近完成歷史日曆視圖 -->
       <div class="grid grid-cols-7 gap-1 text-xs">
         <div 
-          v-for="record in statistics.recentHistory.slice(-21)" 
+          v-for="record in task.stat.recentHistory.slice(-21)" 
           :key="record.date"
           :title="`${formatDate(record.date)}: ${record.completed ? 'Completed' : 'Not completed'}`"
           class="w-6 h-6 rounded-sm border flex items-center justify-center cursor-help"
@@ -119,17 +113,17 @@
       </div>
       
       <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
-        <span>{{ statistics.recentHistory.filter(r => r.completed).length }} completed</span>
-        <span>{{ statistics.recentHistory.length }} expected</span>
+        <span>{{ task.stat.recentHistory.filter(r => r.completed).length }} completed</span>
+        <span>{{ task.stat.recentHistory.length }} expected</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { format, parseISO } from 'date-fns'
-import type { DailyTask, DailyTaskStatistics, RecurrenceType } from '@/types'
+import type { DailyTask, DailyTaskStatistics } from '@/types'
 import { taskApi } from '@/utils/api'
 
 interface Props {
@@ -144,13 +138,12 @@ const emit = defineEmits<{
 }>()
 
 const loading = ref(false)
-const statistics = ref<DailyTaskStatistics | null>(null)
 const showStatistics = ref(false)
 
 const streakClass = computed(() => {
-  if (!statistics.value) return 'text-gray-600'
+  if (!props.task.stat) return 'text-gray-600'
   
-  const streak = statistics.value.currentStreak
+  const streak = props.task.stat.currentStreak
   if (streak >= 7) return 'text-green-600'
   if (streak >= 3) return 'text-blue-600'
   return 'text-gray-600'
@@ -179,7 +172,7 @@ const handleToggleCompletion = async () => {
 const loadStatistics = async () => {
   try {
     const response = await taskApi.getTaskStatistics(props.task.id)
-    statistics.value = response.stats as DailyTaskStatistics
+    props.task.stat = response.stats as DailyTaskStatistics
   } catch (error) {
     console.error('Failed to load daily task statistics:', error)
   }
@@ -243,11 +236,6 @@ const formatDate = (dateStr: string): string => {
     return dateStr
   }
 }
-
-// 組件載入時獲取統計數據
-onMounted(() => {
-  loadStatistics()
-})
 </script>
 
 <style scoped>

@@ -2,7 +2,6 @@
   <div class="habit-task-item border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <!-- 習慣完成按鈕 (不可撤銷) -->
         <button
           @click="handleHabitCompletion"
           :disabled="loading"
@@ -27,31 +26,29 @@
             {{ habit.description }}
           </p>
           
-          <!-- 統計信息 -->
-          <div v-if="statistics" class="mt-2 space-y-1">
+          <div v-if="habit.stat" class="mt-2 space-y-1">
             <div class="flex items-center space-x-4 text-sm">
               <span class="text-gray-600">
                 Progress: 
                 <span class="font-medium" :class="successClass">
-                  {{ statistics.completionCount }} / {{ habit.threshold_count }}
+                  {{ habit.stat.completionCount }} / {{ habit.threshold_count }}
                 </span>
                 <span class="text-xs text-gray-400 ml-1">
-                  ({{ statistics.completionRate }}%)
+                  ({{ habit.stat.completionRate }}%)
                 </span>
               </span>
-              <span v-if="statistics.daysSinceLastCompletion >= 0" class="text-gray-600">
-                Last: {{ formatDaysSinceCompletion(statistics.daysSinceLastCompletion) }}
+              <span v-if="habit.stat.daysSinceLastCompletion >= 0" class="text-gray-600">
+                Last: {{ formatDaysSinceCompletion(habit.stat.daysSinceLastCompletion) }}
               </span>
             </div>
             
-            <!-- 成功狀態指示器 -->
             <div class="flex items-center space-x-2">
               <div class="flex items-center space-x-1">
                 <div 
                   class="w-2 h-2 rounded-full"
-                  :class="statistics.isSuccessful ? 'bg-green-500' : 'bg-gray-300'"
+                  :class="habit.stat.isSuccessful ? 'bg-green-500' : 'bg-gray-300'"
                 ></div>
-                <span class="text-xs" :class="statistics.isSuccessful ? 'text-green-600' : 'text-gray-500'">
+                <span class="text-xs" :class="habit.stat.isSuccessful ? 'text-green-600' : 'text-gray-500'">
                   {{ getSuccessMessage() }}
                 </span>
               </div>
@@ -63,7 +60,6 @@
         </div>
       </div>
 
-      <!-- 操作按鈕 -->
       <div class="flex items-center space-x-2">
         <button
           @click="showStatistics = !showStatistics"
@@ -94,14 +90,12 @@
       </div>
     </div>
 
-    <!-- 詳細統計展開區 -->
-    <div v-if="showStatistics && statistics" class="mt-4 pt-4 border-t border-gray-100">
+    <div v-if="showStatistics && habit.stat" class="mt-4 pt-4 border-t border-gray-100">
       <h4 class="text-sm font-medium text-gray-700 mb-2">Recent Activity</h4>
       
-      <!-- 最近完成歷史 -->
-      <div v-if="statistics.completionHistory.length > 0" class="space-y-1">
+      <div v-if="habit.stat.completionHistory.length > 0" class="space-y-1">
         <div 
-          v-for="record in statistics.completionHistory.slice(0, 7)" 
+          v-for="record in habit.stat.completionHistory.slice(0, 7)" 
           :key="record.date"
           class="flex justify-between text-xs text-gray-600"
         >
@@ -117,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { format, parseISO } from 'date-fns'
 import type { HabitTask, HabitStatistics } from '@/types'
 import { taskApi } from '@/utils/api'
@@ -134,24 +128,21 @@ const emit = defineEmits<{
 }>()
 
 const loading = ref(false)
-const statistics = ref<HabitStatistics | null>(null)
 const showStatistics = ref(false)
 
 const habitButtonClass = computed(() => {
   const baseClass = "border-2 hover:scale-105 active:scale-95"
   
   if (props.habit.habit_type === 'BAD') {
-    // 壞習慣 - 橘紅色警告
     return `${baseClass} border-orange-500 bg-orange-500 text-white hover:bg-orange-600`
   } else {
-    // 好習慣 - 綠色
     return `${baseClass} border-green-500 bg-green-500 text-white hover:bg-green-600`
   }
 })
 
 const successClass = computed(() => {
-  if (!statistics.value) return 'text-gray-600'
-  return statistics.value.isSuccessful ? 'text-green-600' : 'text-gray-600'
+  if (!props.habit.stat) return 'text-gray-600'
+  return props.habit.stat.isSuccessful ? 'text-green-600' : 'text-gray-600'
 })
 
 const handleHabitCompletion = async () => {
@@ -159,12 +150,11 @@ const handleHabitCompletion = async () => {
   
   try {
     await taskApi.toggleTaskCompletion(props.habit.id)
-    await loadStatistics() // 重新載入統計
+    await loadStatistics()
     emit('updated')
   } catch (error: any) {
     console.error('Habit completion failed:', error)
     
-    // 顯示錯誤信息
     if (error.response?.data?.error === 'Habit completion cannot be undone') {
       alert('習慣完成記錄無法撤銷')
     } else {
@@ -178,19 +168,19 @@ const handleHabitCompletion = async () => {
 const loadStatistics = async () => {
   try {
     const response = await taskApi.getTaskStatistics(props.habit.id)
-    statistics.value = response.stats as HabitStatistics
+    props.habit.stat = response.stats as HabitStatistics
   } catch (error) {
     console.error('Failed to load habit statistics:', error)
   }
 }
 
 const getSuccessMessage = (): string => {
-  if (!statistics.value) return ''
+  if (!props.habit.stat) return ''
   
   if (props.habit.habit_type === 'GOOD') {
-    return statistics.value.isSuccessful ? 'Target achieved!' : 'Keep going!'
+    return props.habit.stat.isSuccessful ? 'Target achieved!' : 'Keep going!'
   } else {
-    return statistics.value.isSuccessful ? 'Under control!' : 'Need improvement'
+    return props.habit.stat.isSuccessful ? 'Under control!' : 'Need improvement'
   }
 }
 
@@ -208,11 +198,6 @@ const formatDate = (dateStr: string): string => {
     return dateStr
   }
 }
-
-// 組件載入時獲取統計數據
-onMounted(() => {
-  loadStatistics()
-})
 </script>
 
 <style scoped>

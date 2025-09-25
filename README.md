@@ -22,6 +22,46 @@ cd daily-task-manager
 ```
 
 2. Start with Docker:
+
+```docker-compose.yml
+services:
+  backend:
+    image: aaron850130/daily-task-manager-backend:latest
+    container_name: daily-task-manager-backend
+    ports:
+      - "3051:3001"
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-daily_tasks}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost/3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      NODE_ENV: production
+    restart: unless-stopped
+    networks:
+      - shared_net
+
+  frontend:
+    image: aaron850130/daily-task-manager-frontend:latest
+    container_name: daily-task-manager-frontend
+    ports:
+      - "3050:80"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - shared_net
+
+networks:
+  shared_net:
+    name: shared_net
+    external: true
+```
+
 ```bash
 docker-compose up --build
 ```
@@ -36,18 +76,6 @@ docker-compose up --build
 ### Prerequisites
 - Docker & Docker Compose
 - Node.js 18+ (for local development)
-
-### Local Development
-```bash
-# Install dependencies
-npm install
-
-# Start development servers
-npm run dev
-
-# Run tests
-npm test
-```
 
 ### Architecture
 
@@ -93,4 +121,8 @@ VITE_API_URL=http://localhost:3001/api
 ```
 
 ### Todo
+- Use dockerhub as deploy
+- Set user personal prefence
+- Language setting
+- Dark theme mod
 - Reward point system

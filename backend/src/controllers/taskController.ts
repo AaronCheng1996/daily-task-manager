@@ -1,12 +1,18 @@
 import { Response } from 'express';
 import { z } from 'zod';
-import { HabitType, RecurrenceType, TaskType, TimeRangeType } from '../generated/prisma';
+import { HabitType, Milestone, RecurrenceType, Task, TaskType, TimeRangeType } from '../generated/prisma';
 import { TaskService } from '../services/taskService';
 import { DailyTaskService } from '../services/dailyTaskService';
 import { AuthRequest } from '../utils/auth';
 import logger from '../utils/logger';
 import { ErrorType, SuccessMessage } from '../utils/messages.enum';
 import { prisma } from '../utils/prisma';
+import { MilestoneService } from '../services/milestoneService';
+
+interface TaskWithStat extends Task {
+    stat: any;
+    milestones: Milestone[];
+}
 
 const createTaskSchema = z.object({
     title: z.string().min(1).max(255),
@@ -64,7 +70,11 @@ const taskController = {
     getTasks: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
             await checkAndRefreshDailyTasks(req.user!.id);
-            const tasks = await TaskService.getUserTasks(req.user!.id);
+            const tasks = await TaskService.getUserTasks(req.user!.id) as TaskWithStat[];
+            for (const task of tasks) {
+                task.stat = await TaskService.getTaskStatistics(task);
+                task.milestones = await MilestoneService.getTaskMilestones(task.id);
+            }
             res.json({ tasks });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -86,7 +96,9 @@ const taskController = {
     },
     getTaskById: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            const task = await TaskService.getTaskById(req.params.id);
+            const task = await TaskService.getTaskById(req.params.id) as TaskWithStat;
+            task.stat = await TaskService.getTaskStatistics(task);
+            task.milestones = await MilestoneService.getTaskMilestones(task.id);
             res.json({ task });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -109,7 +121,9 @@ const taskController = {
     createTask: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
             const validatedData = createTaskSchema.parse(req.body);
-            const task = await TaskService.createTask(req.user!.id, validatedData);
+            const task = await TaskService.createTask(req.user!.id, validatedData) as TaskWithStat;
+            task.stat = await TaskService.getTaskStatistics(task);
+            task.milestones = await MilestoneService.getTaskMilestones(task.id);
             res.status(201).json({ task });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -133,7 +147,9 @@ const taskController = {
         try {
             const updateSchema = createTaskSchema.partial();
             const updates = updateSchema.parse(req.body);
-            const task = await TaskService.updateTask(req.params.id, updates);
+            const task = await TaskService.updateTask(req.params.id, updates) as TaskWithStat;
+            task.stat = await TaskService.getTaskStatistics(task);
+            task.milestones = await MilestoneService.getTaskMilestones(task.id);
             res.json({ task });
         } catch (error) {
             if (error instanceof z.ZodError) {

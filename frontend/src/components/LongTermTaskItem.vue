@@ -13,7 +13,7 @@
             <span v-if="task.importance > 1" class="text-xs text-warning-600">
               Priority: {{ task.importance }}
             </span>
-            <span v-if="statistics?.isOverdue" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
+            <span v-if="task.stat?.isOverdue" class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
               Overdue
             </span>
           </div>
@@ -25,13 +25,13 @@
           <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
             <span v-if="task.target_completion_at">
               Target: {{ formatDate(task.target_completion_at) }}
-              <span v-if="statistics?.daysToTarget !== undefined" 
+              <span v-if="task.stat?.daysToTarget !== undefined" 
                     :class="targetDateClass">
                 ({{ getTargetDateText() }})
               </span>
             </span>
-            <span v-if="statistics">
-              {{ statistics.completedMilestones }}/{{ statistics.totalMilestones }} milestones
+            <span v-if="task.stat">
+              {{ task.stat.completedMilestones }}/{{ task.stat.totalMilestones }} milestones
             </span>
           </div>
         </div>
@@ -70,18 +70,18 @@
         </div>
       </div>
 
-      <div v-if="task.show_progress && statistics" class="space-y-2">
+      <div v-if="task.show_progress && task.stat" class="space-y-2">
         <div class="flex justify-between text-sm">
           <span class="text-gray-600">Progress</span>
           <span class="font-medium" :class="progressClass">
-            {{ formatProgress(statistics.progress) }}%
+            {{ formatProgress(task.stat.progress) }}%
           </span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2">
           <div 
             class="h-2 rounded-full transition-all duration-300"
             :class="progressBarClass"
-            :style="`width: ${statistics.progress}%`"
+            :style="`width: ${task.stat.progress}%`"
           ></div>
         </div>
       </div>
@@ -129,16 +129,18 @@
           </div>
         </div>
 
-        <div v-if="milestones.length > 0" class="space-y-2">
+        <div v-if="props.task.milestones && props.task.milestones.length > 0" class="space-y-2">
           <draggable
-            v-model="milestones"
-            item-key="id"
+            v-model="validMilestones"
             @end="saveMilestonesOrder"
             handle=".task-handle"
+            item-key="id"
           >
             <template #item="{ element }">
               <div 
-                :key="element.id"
+                v-if="element && element.id"
+                :id="element.id"
+                :data-order-index="element.order_index"
                 class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50 transition-colors"
               >
                 <div class="task-handle cursor-move">⠿</div>
@@ -240,9 +242,9 @@
 
 <script setup lang="ts">
 import draggable from "vuedraggable";
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { format, parseISO } from 'date-fns'
-import type { LongTermTask, LongTermTaskStatistics, Milestone } from '@/types'
+import type { LongTermTask, Milestone } from '@/types'
 import { taskApi } from '@/utils/api'
 
 interface Props {
@@ -256,8 +258,6 @@ const emit = defineEmits<{
   updated: []
 }>()
 
-const statistics = ref<LongTermTaskStatistics | null>(null)
-const milestones = ref<Milestone[]>([])
 const showMilestones = ref(false)
 const showAddMilestone = ref(false)
 const loadingMilestone = ref(false)
@@ -267,10 +267,14 @@ const newMilestone = ref({
   description: ''
 })
 
+const validMilestones = computed(() => {
+  return props.task.milestones?.filter(milestone => milestone && milestone.id) || []
+})
+
 const progressClass = computed(() => {
-  if (!statistics.value) return 'text-gray-600'
+  if (!props.task.stat) return 'text-gray-600'
   
-  const progress = statistics.value.progress
+  const progress = props.task.stat.progress
   if (progress >= 100) return 'text-green-600'
   if (progress >= 75) return 'text-blue-600'
   if (progress >= 50) return 'text-yellow-600'
@@ -278,9 +282,9 @@ const progressClass = computed(() => {
 })
 
 const progressBarClass = computed(() => {
-  if (!statistics.value) return 'bg-gray-400'
+  if (!props.task.stat) return 'bg-gray-400'
   
-  const progress = statistics.value.progress
+  const progress = props.task.stat.progress
   if (progress >= 100) return 'bg-green-500'
   if (progress >= 75) return 'bg-blue-500'
   if (progress >= 50) return 'bg-yellow-500'
@@ -288,9 +292,9 @@ const progressBarClass = computed(() => {
 })
 
 const targetDateClass = computed(() => {
-  if (!statistics.value) return 'text-gray-500'
+  if (!props.task.stat) return 'text-gray-500'
   
-  const { isOverdue, daysToTarget } = statistics.value
+  const { isOverdue, daysToTarget } = props.task.stat
   if (isOverdue) return 'text-red-600'
   if (daysToTarget <= 7) return 'text-yellow-600'
   if (daysToTarget <= 30) return 'text-blue-600'
@@ -298,26 +302,22 @@ const targetDateClass = computed(() => {
 })
 
 const getTargetDateText = (): string => {
-  if (!statistics.value) return ''
+  if (!props.task.stat) return ''
   
-  const { isOverdue, daysToTarget } = statistics.value
+  const { isOverdue, daysToTarget } = props.task.stat
   if (isOverdue) return `${Math.abs(daysToTarget)} days overdue`
   if (daysToTarget === 0) return 'Due today'
   if (daysToTarget === 1) return '1 day left'
   return `${daysToTarget} days left`
 }
 
-const loadData = async () => {
-  try {
-    const [statsResponse, milestonesResponse] = await Promise.all([
-      taskApi.getTaskStatistics(props.task.id),
-      taskApi.getTaskMilestones(props.task.id)
-    ])
-    
-    statistics.value = statsResponse.stats as LongTermTaskStatistics
-    milestones.value = milestonesResponse.milestones
-  } catch (error) {
-    console.error('Failed to load long-term task data:', error)
+const recalculateStatistics = () => {
+  if (props.task.stat) {
+    props.task.stat.totalMilestones = props.task.milestones?.length || 0
+    props.task.stat.completedMilestones = props.task.milestones?.filter(m => m.is_completed).length || 0
+    props.task.stat.progress = props.task.stat.totalMilestones > 0 
+      ? Number(((props.task.stat.completedMilestones / props.task.stat.totalMilestones) * 100).toFixed(2))
+      : 0
   }
 }
 
@@ -330,19 +330,10 @@ const createMilestone = async () => {
     const response = await taskApi.createMilestone(props.task.id, {
       title: newMilestone.value.title,
       description: newMilestone.value.description || undefined,
-      order_index: milestones.value.length
+      order_index: props.task.milestones?.length || 0
     })
-    
-    milestones.value.push(response.milestone)
-    
-    if (statistics.value) {
-      statistics.value.totalMilestones = milestones.value.length
-      statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
-      statistics.value.progress = statistics.value.totalMilestones > 0 
-        ? Number(((statistics.value.completedMilestones / statistics.value.totalMilestones) * 100).toFixed(2))
-        : 0
-    }
-    
+    props.task.milestones?.push(response.milestone)
+    recalculateStatistics()
     newMilestone.value = { title: '', description: '' }
     showAddMilestone.value = false
   } catch (error) {
@@ -359,7 +350,7 @@ const toggleMilestone = async (milestoneId: string) => {
   try {
     await taskApi.toggleMilestoneCompletion(milestoneId, props.task.id)
     
-    const milestone = milestones.value.find(m => m.id === milestoneId)
+    const milestone = props.task.milestones?.find(m => m.id === milestoneId)
     if (milestone) {
       milestone.is_completed = !milestone.is_completed
       if (milestone.is_completed) {
@@ -368,13 +359,7 @@ const toggleMilestone = async (milestoneId: string) => {
         milestone.completion_at = undefined
       }
     }
-    
-    if (statistics.value) {
-      statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
-      statistics.value.progress = statistics.value.totalMilestones > 0 
-        ? Number(((statistics.value.completedMilestones / statistics.value.totalMilestones) * 100).toFixed(2))
-        : 0
-    }
+    recalculateStatistics()
   } catch (error) {
     console.error('Failed to toggle milestone:', error)
     alert('Failed to update milestone')
@@ -390,19 +375,14 @@ const deleteMilestone = async (milestoneId: string) => {
   
   try {
     await taskApi.deleteMilestone(milestoneId, props.task.id)
-    
-    const index = milestones.value.findIndex(m => m.id === milestoneId)
+    let index = -1
+    if (props.task.milestones) {
+      index = props.task.milestones.findIndex(m => m.id === milestoneId)
+    }
     if (index > -1) {
-      milestones.value.splice(index, 1)
+      props.task.milestones?.splice(index, 1)
     }
-    
-    if (statistics.value) {
-      statistics.value.totalMilestones = milestones.value.length
-      statistics.value.completedMilestones = milestones.value.filter(m => m.is_completed).length
-      statistics.value.progress = statistics.value.totalMilestones > 0 
-        ? Number(((statistics.value.completedMilestones / statistics.value.totalMilestones) * 100).toFixed(2))
-        : 0
-    }
+    recalculateStatistics()
   } catch (error) {
     console.error('Failed to delete milestone:', error)
     alert('Failed to delete milestone')
@@ -436,14 +416,15 @@ const saveEditMilestone = async () => {
       description: editMilestoneForm.value.description || undefined
     })
     
-    const milestone = milestones.value.find(m => m.id === editingMilestone.value!.id)
+    const milestone = props.task.milestones?.find(m => m.id === editingMilestone.value!.id)
     if (milestone) {
       milestone.title = editMilestoneForm.value.title
       milestone.description = editMilestoneForm.value.description || undefined
     }
     
     editingMilestone.value = null
-  } catch (error) {
+    recalculateStatistics()
+    } catch (error) {
     console.error('Failed to update milestone:', error)
     alert('Failed to update milestone')
   } finally {
@@ -474,21 +455,22 @@ const formatProgress = (progress: number): string => {
 }
 
 const saveMilestonesOrder = async () => {
-  const reordered = milestones.value.map((m, idx) => ({
+  if (props.task.milestones && validMilestones.value) {
+    props.task.milestones.length = 0;
+    props.task.milestones.push(...validMilestones.value);
+    props.task.milestones.forEach((m, idx) => {
+      m.order_index = idx;
+    });
+  }
+
+  const reordered = validMilestones.value.map((m, idx) => ({
     id: m.id,
     order_index: idx,
   }));
 
-  milestones.value.forEach((m, idx) => {
-    m.order_index = idx;
-  });
-
   await taskApi.reorderMilestones(props.task.id, reordered);
 }
 
-onMounted(() => {
-  loadData()
-})
 </script>
 
 <style scoped>

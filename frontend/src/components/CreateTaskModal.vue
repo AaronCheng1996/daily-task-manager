@@ -92,14 +92,10 @@
               />
             </div>
             <div>
-              <label class="flex items-center space-x-2">
-                <input
-                  v-model="form.is_recurring"
-                  type="checkbox"
-                  class="form-checkbox"
-                />
-                <span class="text-sm font-medium text-gray-700">Recurring Task</span>
-              </label>
+              <ToggleSwitch
+                v-model="form.is_recurring"
+                label="Recurring Task"
+              />
             </div>
             <div v-if="form.is_recurring">
               <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -148,12 +144,6 @@
                     :class="{ selected: form.recurrence_days_of_week.includes(index) }"
                     @click="toggleDayOfWeek(index)"
                   >
-                    <input
-                      type="checkbox"
-                      :value="index"
-                      v-model="form.recurrence_days_of_week"
-                      class="hidden"
-                    />
                     <div class="day-label">{{ day }}</div>
                   </div>
                 </div>
@@ -177,12 +167,6 @@
                     :class="{ selected: form.recurrence_days_of_month.includes(day) }"
                     @click="toggleDayOfMonth(day)"
                   >
-                    <input
-                      type="checkbox"
-                      :value="day"
-                      v-model="form.recurrence_days_of_month"
-                      class="hidden"
-                    />
                     <div class="day-number">{{ day }}</div>
                   </div>
                 </div>
@@ -206,12 +190,6 @@
                     :class="{ selected: form.recurrence_weeks_of_month.includes(week) }"
                     @click="toggleWeekOfMonth(week)"
                   >
-                    <input
-                      type="checkbox"
-                      :value="week"
-                      v-model="form.recurrence_weeks_of_month"
-                      class="hidden"
-                    />
                     <div class="week-number">{{ week }}</div>
                   </div>
                 </div>
@@ -222,14 +200,10 @@
           <!-- LONG_TERM specific fields -->
           <div v-if="form.task_type === 'LONG_TERM'" class="space-y-4">
             <div>
-              <label class="flex items-center space-x-2">
-                <input
-                  v-model="form.show_progress"
-                  type="checkbox"
-                  class="form-checkbox"
-                />
-                <span class="text-sm font-medium text-gray-700">Show Progress Bar</span>
-              </label>
+              <ToggleSwitch
+                v-model="form.show_progress"
+                label="Show Progress Bar"
+              />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -321,6 +295,7 @@
 import { reactive, ref } from 'vue'
 import { useTaskStore } from '@/stores/taskStore'
 import { TaskType } from '@/types'
+import ToggleSwitch from './ToggleSwitch.vue'
 
 const taskStore = useTaskStore()
 const loading = ref(false)
@@ -356,15 +331,6 @@ const toggleWeekOfMonth = (week: number) => {
   }
 }
 
-const toggleSpecialDay = (value: number) => {
-  // Fix: Only toggle the special day (-1), don't affect other selections
-  const indexInArray = form.recurrence_days_of_month.indexOf(value)
-  if (indexInArray > -1) {
-    form.recurrence_days_of_month.splice(indexInArray, 1)
-  } else {
-    form.recurrence_days_of_month.push(value)
-  }
-}
 
 const form = reactive({
   title: '',

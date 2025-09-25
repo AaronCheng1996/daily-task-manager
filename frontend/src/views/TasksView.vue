@@ -112,42 +112,46 @@
         item-key="id"
         @end="saveTasksOrder"
         class="space-y-4"
+        handle=".task-handle"
       >
         <template #item="{ element, index }">
           <div
             :id="element.id"
             :data-order-index="element.order_index"
-            class="animate-slide-up"
+            class="animate-slide-up flex items-center gap-3"
             :style="`animation-delay: ${Math.min(index * 0.1, 1)}s;`"
           >
-            <HabitTaskItem
-              v-if="element.task_type === TaskType.HABIT"
-              :habit="element as HabitTask"
-              @edit="handleEditTask"
-              @delete="handleDeleteTask"
-              @updated="handleTaskUpdated"
-            />
-            <DailyTaskItem
-              v-else-if="element.task_type === TaskType.DAILY_TASK"
-              :task="element as DailyTask"
-              @edit="handleEditTask"
-              @delete="handleDeleteTask"
-              @updated="handleTaskUpdated"
-            />
-            <LongTermTaskItem
-              v-else-if="element.task_type === TaskType.LONG_TERM"
-              :task="element as LongTermTask"
-              @edit="handleEditTask"
-              @delete="handleDeleteTask"
-              @updated="handleTaskUpdated"
-            />
-            <TaskItem
-              v-else
-              :task="element"
-              @toggle="handleToggleTask"
-              @edit="handleEditTask"
-              @delete="handleDeleteTask"
-            />
+            <div class="task-handle cursor-move flex-shrink-0 flex items-center h-full">⠿</div>
+            <div class="flex-1">
+              <HabitTaskItem
+                v-if="element.task_type === TaskType.HABIT"
+                :habit="element as HabitTask"
+                @edit="handleEditTask"
+                @delete="handleDeleteTask"
+                @updated="handleTaskUpdated"
+              />
+              <DailyTaskItem
+                v-else-if="element.task_type === TaskType.DAILY_TASK"
+                :task="element as DailyTask"
+                @edit="handleEditTask"
+                @delete="handleDeleteTask"
+                @updated="handleTaskUpdated"
+              />
+              <LongTermTaskItem
+                v-else-if="element.task_type === TaskType.LONG_TERM"
+                :task="element as LongTermTask"
+                @edit="handleEditTask"
+                @delete="handleDeleteTask"
+                @updated="handleTaskUpdated"
+              />
+              <TaskItem
+                v-else
+                :task="element"
+                @toggle="handleToggleTask"
+                @edit="handleEditTask"
+                @delete="handleDeleteTask"
+              />
+            </div>
           </div>
         </template>
       </draggable>
@@ -221,7 +225,7 @@ const showEditTask = ref(false)
 const editingTask = ref<Task | null>(null)
 const activeFilter = ref('all')
 const searchKeyword = ref('')
-const taskStatusFilter = ref('all')
+const taskStatusFilter = ref('incomplete')
 
 const filters = computed(() => [
   {
@@ -345,7 +349,17 @@ const saveTasksOrder = async (event: any) => {
       : null;
   console.log(movedIdStr, prevOrderIndex, nextOrderIndex)
   await taskApi.reorderTasks(movedIdStr, prevOrderIndex, nextOrderIndex)
-  taskStore.fetchTasks()
+  filteredTasks.value.find(task => task.id === movedIdStr)!.order_index = newIndex
+  if (newIndex !== undefined && newIndex !== null) {
+    const movedTaskIdx = filteredTasks.value.findIndex(task => task.id === movedIdStr)
+    if (movedTaskIdx !== -1 && movedTaskIdx !== newIndex) {
+      const [movedTask] = filteredTasks.value.splice(movedTaskIdx, 1)
+      filteredTasks.value.splice(newIndex, 0, movedTask)
+      filteredTasks.value.forEach((task, idx) => {
+        task.order_index = idx
+      })
+    }
+  }
 }
 
 onMounted(() => {
