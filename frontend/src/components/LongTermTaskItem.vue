@@ -1,13 +1,13 @@
 <template>
-  <div class="longterm-task-item border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+  <div class="longterm-task-item border border-gray-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-sm transition-shadow dark:bg-slate-800">
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <div class="flex-1">
           <div class="flex items-center space-x-2">
-            <h3 class="font-medium text-gray-900" :class="{ 'line-through text-gray-500': task.is_completed }">
+            <h3 class="font-medium text-gray-900 dark:text-gray-100" :class="{ 'line-through text-gray-500 dark:text-gray-400': task.is_completed }">
               {{ task.title }}
             </h3>
-            <span class="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">
+            <span class="text-xs bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300 px-2 py-1 rounded-full">
               Long-term
             </span>
             <span v-if="task.importance > 1" class="text-xs text-warning-600">
@@ -18,11 +18,11 @@
             </span>
           </div>
           
-          <p v-if="task.description" class="text-sm text-gray-600 mt-1">
+          <p v-if="task.description" class="text-sm text-gray-600 mt-1 dark:text-gray-400">
             {{ task.description }}
           </p>
 
-          <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+          <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
             <span v-if="task.target_completion_at">
               Target: {{ formatDate(task.target_completion_at) }}
               <span v-if="task.stat?.daysToTarget !== undefined" 
@@ -39,7 +39,7 @@
         <div class="flex items-center space-x-2">
           <button
             @click="showMilestones = !showMilestones"
-            class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            class="p-2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-600"
             title="Toggle milestones"
           >
             <svg 
@@ -53,7 +53,7 @@
           </button>
           <button
             @click="$emit('edit', task)"
-            class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            class="p-2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-600"
           >
             <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.828-2.828z" />
@@ -61,7 +61,7 @@
           </button>
           <button
             @click="$emit('delete', task.id)"
-            class="p-2 text-gray-400 hover:text-danger-600 transition-colors"
+            class="p-2 text-gray-400 hover:text-danger-600 transition-colors dark:text-gray-400 dark:hover:text-danger-600"
           >
             <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -71,13 +71,13 @@
       </div>
 
       <div v-if="task.show_progress && task.stat" class="space-y-2">
-        <div class="flex justify-between text-sm">
+        <div class="flex justify-between text-sm dark:text-gray-400">
           <span class="text-gray-600">Progress</span>
           <span class="font-medium" :class="progressClass">
             {{ formatProgress(task.stat.progress) }}%
           </span>
         </div>
-        <div class="w-full bg-gray-200 rounded-full h-2">
+        <div class="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2">
           <div 
             class="h-2 rounded-full transition-all duration-300"
             :class="progressBarClass"
@@ -86,42 +86,44 @@
         </div>
       </div>
 
-      <div v-if="showMilestones" class="space-y-3 border-t border-gray-100 pt-4">
+      <div v-if="showMilestones" class="space-y-3 border-t border-gray-100 dark:border-slate-700 pt-4">
         <div class="flex items-center justify-between">
-          <h4 class="text-sm font-medium text-gray-700">Milestones</h4>
+          <h4 class="text-sm font-medium text-gray-700 dark:text-gray-400">Milestones</h4>
           <button
-            @click="showAddMilestone = true"
-            class="text-xs text-primary-600 hover:text-primary-800 transition-colors"
+            ref="addMilestoneButton"
+            @click="handleAddMilestoneClick"
+            class="text-xs text-primary-600 hover:text-primary-800 transition-colors dark:text-primary-400 dark:hover:text-primary-600"
           >
             + Add Milestone
           </button>
         </div>
 
-        <div v-if="showAddMilestone" class="bg-gray-50 p-3 rounded border">
+        <div v-if="showAddMilestone" class="bg-gray-50 p-3 rounded border dark:bg-slate-800">
           <div class="space-y-2">
             <input
+              ref="milestoneTitleInput"
               v-model="newMilestone.title"
               placeholder="Milestone title"
-              class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+              class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-slate-800"
               @keyup.enter="createMilestone"
             />
             <textarea
               v-model="newMilestone.description"
               placeholder="Description (optional)"
-              class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+              class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-slate-800"
               rows="2"
             ></textarea>
             <div class="flex space-x-2">
               <button
                 @click="createMilestone"
                 :disabled="!newMilestone.title.trim() || loadingMilestone"
-                class="text-xs px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="text-xs px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-primary-600 dark:hover:bg-primary-700"
               >
                 {{ loadingMilestone ? 'Adding...' : 'Add' }}
               </button>
               <button
                 @click="cancelAddMilestone"
-                class="text-xs px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                class="text-xs px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 dark:bg-slate-800 dark:text-gray-400 dark:hover:bg-slate-700"
               >
                 Cancel
               </button>
@@ -141,7 +143,7 @@
                 v-if="element && element.id"
                 :id="element.id"
                 :data-order-index="element.order_index"
-                class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50 transition-colors"
+                class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors dark:bg-slate-800"
               >
                 <div class="task-handle cursor-move">⠿</div>
                 <button
@@ -150,7 +152,7 @@
                   class="flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
                   :class="element.is_completed 
                     ? 'bg-purple-500 border-purple-500 text-white' 
-                    : 'border-gray-300 hover:border-purple-500'"
+                    : 'border-gray-300 hover:border-purple-500 dark:bg-slate-800 dark:border-slate-700 dark:hover:border-purple-500'"
                 >
                   <svg v-if="element.is_completed" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -161,13 +163,13 @@
                   <div v-if="editingMilestone?.id === element.id" class="space-y-2">
                     <input
                       v-model="editMilestoneForm.title"
-                      class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-slate-800"
                       placeholder="Milestone title"
                       @keyup.enter="saveEditMilestone"
                     />
                     <textarea
                       v-model="editMilestoneForm.description"
-                      class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      class="w-full text-sm px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-slate-800"
                       rows="2"
                       placeholder="Description (optional)"
                     ></textarea>
@@ -175,13 +177,13 @@
                       <button
                         @click="saveEditMilestone"
                         :disabled="!editMilestoneForm.title.trim() || loadingMilestone"
-                        class="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                        class="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 dark:bg-green-600 dark:hover:bg-green-700"
                       >
                         {{ loadingMilestone ? 'Saving...' : 'Save' }}
                       </button>
                       <button
                         @click="cancelEditMilestone"
-                        class="text-xs px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        class="text-xs px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 dark:bg-slate-800 dark:text-gray-400 dark:hover:bg-slate-700"
                       >
                         Cancel
                       </button>
@@ -189,13 +191,13 @@
                   </div>
                   
                   <div v-else>
-                    <h5 class="text-sm font-medium" :class="{ 'line-through text-gray-500': element.is_completed }">
+                    <h5 class="text-sm font-medium" :class="{ 'line-through text-gray-500 dark:text-gray-400': element.is_completed }">
                       {{ element.title }}
                     </h5>
-                    <p v-if="element.description" class="text-xs text-gray-600 mt-1">
+                    <p v-if="element.description" class="text-xs text-gray-600 mt-1 dark:text-gray-400">
                       {{ element.description }}
                     </p>
-                    <span v-if="element.completion_at" class="text-xs text-gray-400">
+                    <span v-if="element.completion_at" class="text-xs text-gray-400 dark:text-gray-400">
                       Completed: {{ formatDate(element.completion_at) }}
                     </span>
                   </div>
@@ -204,7 +206,7 @@
                 <div class="flex items-center space-x-1">
                   <button
                     @click="startEditMilestone(element)"
-                    class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    class="p-1 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-600"
                     title="Edit milestone"
                   >
                     <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
@@ -213,7 +215,7 @@
                   </button>
                   <button
                     @click="deleteMilestone(element.id)"
-                    class="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    class="p-1 text-gray-400 hover:text-red-600 transition-colors dark:text-gray-400 dark:hover:text-red-600"
                     title="Delete milestone"
                   >
                     <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
@@ -226,11 +228,11 @@
           </draggable>
         </div>
         
-        <div v-else class="text-center py-4 text-gray-500">
+        <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400">
           <p class="text-sm">No milestones yet</p>
           <button
-            @click="showAddMilestone = true"
-            class="text-xs text-primary-600 hover:text-primary-800 mt-1"
+            @click="handleAddMilestoneClick"
+            class="text-xs text-primary-600 hover:text-primary-800 mt-1 dark:text-primary-400 dark:hover:text-primary-600"
           >
             Add your first milestone
           </button>
@@ -242,7 +244,7 @@
 
 <script setup lang="ts">
 import draggable from "vuedraggable";
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { format, parseISO } from 'date-fns'
 import type { LongTermTask, Milestone } from '@/types'
 import { taskApi } from '@/utils/api'
@@ -261,6 +263,8 @@ const emit = defineEmits<{
 const showMilestones = ref(false)
 const showAddMilestone = ref(false)
 const loadingMilestone = ref(false)
+const milestoneTitleInput = ref<HTMLInputElement | null>(null)
+const addMilestoneButton = ref<HTMLButtonElement | null>(null)
 
 const newMilestone = ref({
   title: '',
@@ -342,6 +346,8 @@ const createMilestone = async () => {
   } finally {
     loadingMilestone.value = false
   }
+
+  addMilestoneButton.value?.focus()
 }
 
 const toggleMilestone = async (milestoneId: string) => {
@@ -442,6 +448,12 @@ const cancelAddMilestone = () => {
   showAddMilestone.value = false
 }
 
+const handleAddMilestoneClick = async () => {
+  showAddMilestone.value = true
+  await nextTick()
+  milestoneTitleInput.value?.focus()
+}
+
 const formatDate = (dateStr: string): string => {
   try {
     return format(parseISO(dateStr), 'MMM dd, yyyy')
@@ -478,7 +490,15 @@ const saveMilestonesOrder = async () => {
   background: linear-gradient(to right, #faf5ff 0%, #ffffff 100%);
 }
 
+.dark .longterm-task-item {
+  background: linear-gradient(to right, #1e293b 0%, #334155 100%);
+}
+
 .longterm-task-item:hover {
   background: linear-gradient(to right, #f3e8ff 0%, #ffffff 100%);
+}
+
+.dark .longterm-task-item:hover {
+  background: linear-gradient(to right, #0f172a 0%, #1e293b 100%);
 }
 </style>

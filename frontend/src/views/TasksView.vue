@@ -22,7 +22,7 @@
     <!-- Search and Filter Section -->
     <div class="mb-8 space-y-4">
       <!-- Search Bar -->
-      <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/60 shadow-soft">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/60 shadow-soft dark:bg-slate-800/80 dark:border-slate-700/60">
         <div class="relative">
           <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -46,17 +46,17 @@
       </div>
 
       <!-- Filter Tabs -->
-      <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-2 border border-white/60 shadow-soft">
+      <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl p-2 border border-white/60 dark:border-slate-700/60 shadow-soft">
         <nav class="flex flex-wrap justify-between items-center gap-2">
           <div class="flex flex-wrap gap-2">
             <button
               v-for="filter in filters"
               :key="filter.key"
-              @click="activeFilter = filter.key"
+              @click="activeFilter = filter.key as DefaultTaskType"
               class="flex items-center px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 transform hover:scale-105"
               :class="activeFilter === filter.key
                 ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-medium'
-                : 'text-gray-600 hover:text-gray-800 hover:bg-white/80'"
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/80 dark:hover:bg-slate-700/80'"
             >
               {{ filter.label }}
               <span
@@ -64,7 +64,7 @@
                 class="ml-2 px-2 py-1 rounded-full text-xs font-bold"
                 :class="activeFilter === filter.key
                   ? 'bg-white/20 text-white'
-                  : 'bg-gray-100 text-gray-700'"
+                  : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300'"
               >
                 {{ filter.count }}
               </span>
@@ -85,7 +85,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       </div>
-      <p class="text-lg text-gray-600">{{ $t('common.loading') }}</p>
+      <p class="text-lg text-gray-600 dark:text-gray-400">{{ $t('common.loading') }}</p>
     </div>
 
     <!-- Error State -->
@@ -206,8 +206,9 @@
 
 <script setup lang="ts">
 import draggable from "vuedraggable";
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useTaskStore } from '@/stores/taskStore'
+import { usePreferencesStore, type TaskStatusFilter, type DefaultTaskType } from '@/stores/preferencesStore'
 import { TaskType } from '@/types'
 import type { Task, HabitTask, DailyTask, LongTermTask } from '@/types'
 import TaskItem from '@/components/TaskItem.vue'
@@ -220,40 +221,55 @@ import TaskStatusDropdown from '@/components/TaskStatusDropdown.vue'
 import { taskApi } from '@/utils/api'
 
 const taskStore = useTaskStore()
+const preferencesStore = usePreferencesStore()
 const showCreateTask = ref(false)
 const showEditTask = ref(false)
 const editingTask = ref<Task | null>(null)
-const activeFilter = ref('all')
+const activeFilter = ref<DefaultTaskType>(preferencesStore.getDefaultTaskType())
 const searchKeyword = ref('')
-const taskStatusFilter = ref('incomplete')
+const taskStatusFilter = ref<TaskStatusFilter>(preferencesStore.getDefaultTaskFilter())
 
-const filters = computed(() => [
-  {
-    key: 'all',
-    label: 'All Tasks',
-    count: taskStore.tasks.length
-  },
-  {
-    key: 'todo',
-    label: 'Todo',
-    count: taskStore.tasksByType(TaskType.TODO).length
-  },
-  {
-    key: 'habit',
-    label: 'Habits',
-    count: taskStore.tasksByType(TaskType.HABIT).length
-  },
-  {
-    key: 'daily',
-    label: 'Daily Tasks',
-    count: taskStore.tasksByType(TaskType.DAILY_TASK).length
-  },
-  {
-    key: 'longterm',
-    label: 'Long-term',
-    count: taskStore.tasksByType(TaskType.LONG_TERM).length
+const filters = computed(() => {
+  const getFilteredCount = (taskType: TaskType | null) => {
+    let tasks = taskType ? taskStore.tasksByType(taskType) : taskStore.tasks
+    
+    if (taskStatusFilter.value === 'complete') {
+      return tasks.filter(task => task.is_completed).length
+    } else if (taskStatusFilter.value === 'incomplete') {
+      return tasks.filter(task => !task.is_completed).length
+    }
+    
+    return tasks.length
   }
-])
+
+  return [
+    {
+      key: 'todo',
+      label: 'Todo',
+      count: getFilteredCount(TaskType.TODO)
+    },
+    {
+      key: 'habit',
+      label: 'Habits',
+      count: getFilteredCount(TaskType.HABIT)
+    },
+    {
+      key: 'daily',
+      label: 'Daily Tasks',
+      count: getFilteredCount(TaskType.DAILY_TASK)
+    },
+    {
+      key: 'longterm',
+      label: 'Long-term',
+      count: getFilteredCount(TaskType.LONG_TERM)
+    },
+    {
+      key: 'all',
+      label: 'All Tasks',
+      count: getFilteredCount(null)
+    },
+  ]
+})
 
 const filteredTasks = computed(() => {
   let tasks: Task[] = []
@@ -325,11 +341,7 @@ const handleTaskUpdated = () => {
   taskStore.fetchTasks()
 }
 
-const handleTaskRefresh = () => {
-  if (!taskStore.loading) {
-    taskStore.fetchTasks()
-  }
-}
+// Removed unused function - handleTaskRefresh
 
 const saveTasksOrder = async (event: any) => {
   const newIndex = event.newIndex;
@@ -362,7 +374,18 @@ const saveTasksOrder = async (event: any) => {
   }
 }
 
+// Watch for task status filter changes and save to preferences
+watch(taskStatusFilter, (newValue) => {
+  preferencesStore.updatePreference('defaultTaskFilter', newValue)
+})
+
+// Watch for active filter changes and save to preferences
+watch(activeFilter, (newValue) => {
+  preferencesStore.updatePreference('defaultTaskType', newValue)
+})
+
 onMounted(() => {
+  preferencesStore.initializePreferences()
   taskStore.fetchTasks()
 })
 </script>

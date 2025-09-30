@@ -1,5 +1,5 @@
 <template>
-  <div class="habit-task-item border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+  <div class="habit-task-item task-item border border-gray-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-sm dark:hover:shadow-slate-900/20 transition-shadow">
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <button
@@ -13,27 +13,27 @@
         
         <div class="flex-1">
           <div class="flex items-center space-x-2">
-            <h3 class="font-medium text-gray-900">{{ habit.title }}</h3>
+            <h3 class="font-medium task-item-content text-gray-900 dark:text-gray-100">{{ habit.title }}</h3>
             <span 
               class="text-xs px-2 py-1 rounded-full"
-              :class="habit.habit_type === 'GOOD' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'"
+              :class="habit.habit_type === 'GOOD' ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300' : 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300'"
             >
               {{ habit.habit_type === 'GOOD' ? 'Good Habit' : 'Bad Habit' }}
             </span>
           </div>
           
-          <p v-if="habit.description" class="text-sm text-gray-600 mt-1">
+          <p v-if="habit.description" class="text-sm task-item-meta text-gray-600 dark:text-gray-400 mt-1">
             {{ habit.description }}
           </p>
           
           <div v-if="habit.stat" class="mt-2 space-y-1">
             <div class="flex items-center space-x-4 text-sm">
-              <span class="text-gray-600">
+              <span class="task-item-meta text-gray-600 dark:text-gray-400">
                 Progress: 
                 <span class="font-medium" :class="successClass">
                   {{ habit.stat.completionCount }} / {{ habit.threshold_count }}
                 </span>
-                <span class="text-xs text-gray-400 ml-1">
+                <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">
                   ({{ habit.stat.completionRate }}%)
                 </span>
               </span>
@@ -205,7 +205,15 @@ const formatDate = (dateStr: string): string => {
   background: linear-gradient(to right, #f8fafc 0%, #ffffff 100%);
 }
 
+.dark .habit-task-item {
+  background: linear-gradient(to right, #1e293b 0%, #334155 100%);
+}
+
 .habit-task-item:hover {
   background: linear-gradient(to right, #f1f5f9 0%, #ffffff 100%);
+}
+
+.dark .habit-task-item:hover {
+  background: linear-gradient(to right, #0f172a 0%, #1e293b 100%);
 }
 </style>

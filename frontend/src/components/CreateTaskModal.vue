@@ -1,12 +1,12 @@
 <template>
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto dark:bg-slate-800">
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-xl font-semibold">{{ $t('tasks.createTask') }}</h2>
           <button
             @click="$emit('close')"
-            class="text-gray-400 hover:text-gray-600 transition-colors"
+            class="text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-200"
           >
             <svg class="w-6 h-6" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -16,7 +16,7 @@
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('tasks.taskTitle') }}
             </label>
             <input
@@ -30,7 +30,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('tasks.description') }}
             </label>
             <textarea
@@ -42,7 +42,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Task Type
             </label>
             <select v-model="form.task_type" class="form-input">
@@ -54,7 +54,7 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('tasks.importance') }} (1-5)
             </label>
             <input
@@ -68,7 +68,7 @@
 
           <!-- TODO specific fields -->
           <div v-if="form.task_type === 'TODO'">
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('tasks.dueDate') }} (Optional)
             </label>
             <input
@@ -81,7 +81,7 @@
           <!-- DAILY_TASK specific fields -->
           <div v-if="form.task_type === 'DAILY_TASK'" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Target Date
               </label>
               <input
@@ -98,7 +98,7 @@
               />
             </div>
             <div v-if="form.is_recurring">
-              <label class="block text-sm font-medium text-gray-700 mb-1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Recurrence Type
               </label>
               <select v-model="form.recurrence_type" class="form-input">
@@ -220,7 +220,7 @@
           <!-- HABIT specific fields -->
           <div v-if="form.task_type === 'HABIT'" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Habit Type
               </label>
               <select v-model="form.habit_type" class="form-input">
@@ -229,7 +229,7 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Target Count
               </label>
               <input
@@ -242,7 +242,7 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Time Range
                 </label>
                 <input
@@ -253,7 +253,7 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Period
                 </label>
                 <select v-model="form.time_range_type" class="form-input">
@@ -265,7 +265,7 @@
             </div>
           </div>
 
-          <div v-if="error" class="text-danger-600 text-sm">
+          <div v-if="error" class="text-danger-600 text-sm dark:text-danger-400">
             {{ error }}
           </div>
 

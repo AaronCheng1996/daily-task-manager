@@ -8,17 +8,26 @@
   }
   
   body {
-    @apply text-gray-900;
+    @apply text-gray-900 dark:text-gray-100;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
     min-height: 100vh;
   }
   
+  /* Dark mode backgrounds */
+  .dark body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  }
+  
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold;
+    @apply font-semibold text-gray-900 dark:text-gray-100;
   }
   
   button {
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg transition-all duration-200;
+  }
+  
+  .dark button {
+    @apply focus:ring-primary-400 focus:ring-offset-slate-800;
   }
 
   toggle-button {
@@ -27,6 +36,8 @@
   
   input, textarea, select {
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200;
+    @apply dark:bg-slate-800 dark:border-slate-600 dark:text-gray-100;
+    @apply dark:focus:ring-primary-400 dark:focus:border-primary-400;
   }
 }
 
@@ -49,6 +60,8 @@
   .btn-secondary {
     @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400;
     @apply shadow-soft hover:shadow-medium;
+    @apply dark:bg-slate-800 dark:text-gray-200 dark:border-slate-600;
+    @apply dark:hover:bg-slate-700 dark:hover:border-slate-500;
   }
   
   .btn-success {
@@ -73,18 +86,26 @@
     @apply block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-soft;
     @apply bg-white/80 backdrop-blur-sm focus:bg-white;
     @apply transition-all duration-200;
+    @apply dark:bg-slate-800/80 dark:border-slate-600 dark:focus:bg-slate-800;
+    @apply dark:text-gray-100 dark:placeholder-gray-400;
   }
   
   .card {
     @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-soft border border-white/50 p-6;
     @apply hover:shadow-medium transition-all duration-300;
     @apply animate-fade-in;
+    @apply dark:bg-slate-800/90 dark:border-slate-700/50 dark:shadow-slate-900/20;
   }
   
   .card-gradient {
     @apply relative overflow-hidden;
     background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
     @apply backdrop-blur-sm border border-white/40 shadow-medium;
+  }
+  
+  .dark .card-gradient {
+    background: linear-gradient(135deg, rgba(30,41,59,0.95) 0%, rgba(51,65,85,0.85) 100%);
+    @apply border-slate-700/40;
   }
   
   .card-gradient::before {
@@ -95,6 +116,10 @@
   
   .card-gradient:hover::before {
     @apply opacity-100;
+  }
+  
+  .dark .card-gradient::before {
+    background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(168,85,247,0.15) 100%);
   }
   
   .stat-card {
@@ -131,10 +156,38 @@
     @apply bg-white/95 backdrop-blur-sm rounded-xl shadow-soft border border-white/60 p-4;
     @apply hover:shadow-medium hover:scale-[1.01] transition-all duration-300;
     @apply animate-slide-up;
+    @apply dark:bg-slate-800/95 dark:border-slate-700/60 dark:shadow-slate-900/30;
   }
   
   .task-card-completed {
     @apply bg-gradient-to-r from-green-50 to-emerald-50 border-green-200;
+    @apply dark:from-green-900/40 dark:to-emerald-900/40 dark:border-green-800/50;
+  }
+  
+  /* Task item specific styles */
+  .task-item {
+    @apply bg-white/90 backdrop-blur-sm rounded-xl shadow-soft border border-white/50;
+    @apply dark:bg-slate-800/90 dark:border-slate-700/50 dark:shadow-slate-900/20;
+  }
+  
+  .task-item-content {
+    @apply text-gray-800 dark:text-gray-200;
+  }
+  
+  .task-item-meta {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+  
+  .task-item-badge {
+    @apply bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300;
+  }
+  
+  .task-progress {
+    @apply bg-gray-200 dark:bg-slate-700;
+  }
+  
+  .task-progress-bar {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600;
   }
   
   .gradient-text {
@@ -144,24 +197,36 @@
     background-clip: text;
   }
   
+  .dark .gradient-text {
+    background: linear-gradient(135deg, #38bdf8 0%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
   .glass-effect {
     @apply bg-white/20 backdrop-blur-md border border-white/30;
+    @apply dark:bg-slate-800/30 dark:border-slate-600/30;
   }
   
   .nav-glass {
     @apply bg-white/95 backdrop-blur-lg border border-white/50;
     @apply shadow-soft;
+    @apply dark:bg-slate-900/95 dark:border-slate-800/50;
   }
   
   .nav-link {
     @apply flex items-center px-4 py-2 rounded-xl font-medium text-gray-600;
     @apply hover:bg-white/60 hover:text-primary-700 transition-all duration-200;
     @apply border border-transparent hover:border-white/40;
+    @apply dark:text-gray-300 dark:hover:bg-slate-800/60 dark:hover:text-primary-400;
+    @apply dark:hover:border-slate-600/40;
   }
   
   .nav-link-active {
     @apply bg-white/80 text-primary-700 border-primary-200/50;
     @apply shadow-soft;
+    @apply dark:bg-slate-800/80 dark:text-primary-400 dark:border-primary-700/50;
   }
   
   .line-clamp-2 {
@@ -179,10 +244,13 @@
     @apply border border-white/60 shadow-soft;
     @apply backdrop-blur-sm;
     @apply hover:shadow-medium transition-all duration-300;
+    @apply dark:bg-gradient-to-br dark:from-slate-800/90 dark:to-slate-700/90;
+    @apply dark:border-slate-600/60;
   }
 
   .day-selector:hover {
     @apply border-primary-200/50;
+    @apply dark:border-primary-600/50;
   }
 
   .day-item {
@@ -190,30 +258,37 @@
     @apply transition-all duration-200 cursor-pointer;
     @apply hover:bg-primary-50/50 hover:scale-105;
     @apply border border-transparent hover:border-primary-200/30;
+    @apply dark:hover:bg-primary-900/30 dark:hover:border-primary-700/30;
   }
 
   .day-item.selected {
     @apply bg-gradient-to-br from-primary-500/10 to-purple-500/10;
     @apply border-primary-300/50 shadow-soft;
     @apply scale-105;
+    @apply dark:bg-gradient-to-br dark:from-primary-600/20 dark:to-purple-600/20;
+    @apply dark:border-primary-600/50;
   }
 
   .day-item.selected .day-label {
     @apply text-primary-700 font-semibold;
+    @apply dark:text-primary-400;
   }
 
   .day-label {
     @apply text-xs font-medium text-gray-600 mt-1;
     @apply transition-colors duration-200;
+    @apply dark:text-gray-400;
   }
 
   .day-number {
     @apply text-sm font-semibold text-gray-700;
     @apply transition-colors duration-200;
+    @apply dark:text-gray-300;
   }
 
   .day-item.selected .day-number {
     @apply text-primary-700;
+    @apply dark:text-primary-400;
   }
 
   /* Week selector styles */
@@ -223,6 +298,8 @@
     @apply border border-white/60 shadow-soft;
     @apply backdrop-blur-sm;
     @apply hover:shadow-medium transition-all duration-300;
+    @apply dark:bg-gradient-to-br dark:from-slate-800/90 dark:to-slate-700/90;
+    @apply dark:border-slate-600/60;
   }
 
   .week-item {
@@ -231,30 +308,38 @@
     @apply hover:bg-primary-50/50 hover:scale-105;
     @apply border border-transparent hover:border-primary-200/30;
     @apply bg-gradient-to-br from-gray-50/50 to-white/50;
+    @apply dark:bg-gradient-to-br dark:from-slate-700/50 dark:to-slate-800/50;
+    @apply dark:hover:bg-primary-900/30 dark:hover:border-primary-700/30;
   }
 
   .week-item.selected {
     @apply bg-gradient-to-br from-primary-500/15 to-purple-500/15;
     @apply border-primary-300/50 shadow-soft;
     @apply scale-105;
+    @apply dark:bg-gradient-to-br dark:from-primary-600/20 dark:to-purple-600/20;
+    @apply dark:border-primary-600/50;
   }
 
   .week-item.selected .week-label {
     @apply text-primary-700 font-bold;
+    @apply dark:text-primary-400;
   }
 
   .week-label {
     @apply text-sm font-semibold text-gray-700;
     @apply transition-colors duration-200;
+    @apply dark:text-gray-300;
   }
 
   .week-number {
     @apply text-lg font-bold text-gray-600;
     @apply transition-colors duration-200;
+    @apply dark:text-gray-400;
   }
 
   .week-item.selected .week-number {
     @apply text-primary-700;
+    @apply dark:text-primary-400;
   }
 
   /* Section headers */
@@ -264,10 +349,12 @@
 
   .section-icon {
     @apply w-5 h-5 text-primary-500;
+    @apply dark:text-primary-400;
   }
 
   .section-title {
     @apply text-sm font-semibold text-gray-700;
+    @apply dark:text-gray-300;
   }
 
   /* Special option styles */
@@ -277,23 +364,30 @@
     @apply border border-amber-200/50 shadow-soft;
     @apply transition-all duration-200 cursor-pointer;
     @apply hover:shadow-medium hover:scale-[1.02];
+    @apply dark:bg-gradient-to-r dark:from-amber-900/20 dark:to-orange-900/20;
+    @apply dark:border-amber-700/30;
   }
 
   .special-option:hover {
     @apply border-amber-300/60 bg-gradient-to-r from-amber-50 to-orange-50;
+    @apply dark:border-amber-600/60 dark:bg-gradient-to-r dark:from-amber-900/30 dark:to-orange-900/30;
   }
 
   .special-option.selected {
     @apply bg-gradient-to-r from-primary-500/10 to-purple-500/10;
     @apply border-primary-300/50;
+    @apply dark:bg-gradient-to-r dark:from-primary-600/20 dark:to-purple-600/20;
+    @apply dark:border-primary-600/50;
   }
 
   .special-label {
     @apply text-sm font-medium text-gray-700;
     @apply transition-colors duration-200;
+    @apply dark:text-gray-300;
   }
 
   .special-option.selected .special-label {
     @apply text-primary-700 font-semibold;
+    @apply dark:text-primary-400;
   }
 }

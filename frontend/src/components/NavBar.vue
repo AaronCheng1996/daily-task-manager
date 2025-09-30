@@ -13,7 +13,7 @@
           </RouterLink>
           
           <div class="hidden md:flex space-x-1">
-            <RouterLink
+            <!-- <RouterLink
               to="/"
               class="nav-link"
               active-class="nav-link-active"
@@ -22,7 +22,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m0 0V11a1 1 0 011-1h2a1 1 0 011 1v10m0 0h3a1 1 0 001-1V10M5 10L12 3l7 7" />
               </svg>
               {{ $t('navigation.home') }}
-            </RouterLink>
+            </RouterLink> -->
             <RouterLink
               to="/tasks"
               class="nav-link"
@@ -37,24 +37,15 @@
         </div>
 
         <div class="flex items-center space-x-4">
-          <!-- User avatar and info -->
-          <div class="flex items-center space-x-3 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 border border-white/40">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-              <span class="text-white font-medium text-sm">
-                {{ userStore.user?.username?.charAt(0).toUpperCase() }}
-              </span>
-            </div>
-            <span class="text-gray-700 font-medium hidden sm:block">{{ userStore.user?.username }}</span>
-          </div>
-          
           <RouterLink
             to="/profile"
             class="nav-link"
+            active-class="nav-link-active"
           >
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <span class="hidden md:inline">{{ $t('navigation.profile') }}</span>
+            <span class="text-gray-700 font-medium hidden sm:block dark:text-gray-200">{{ userStore.user?.username }}</span>
           </RouterLink>
           
           <button
@@ -69,6 +60,7 @@
         </div>
       </div>
     </div>
+    
   </nav>
 </template>
 

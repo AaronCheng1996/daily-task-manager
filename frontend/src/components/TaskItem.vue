@@ -10,7 +10,7 @@
         class="flex-shrink-0 w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all duration-200 transform hover:scale-110"
         :class="task.is_completed 
           ? 'bg-gradient-to-r from-success-500 to-emerald-500 border-success-500 text-white shadow-soft' 
-          : 'border-gray-300 hover:border-success-500 bg-white hover:bg-success-50'"
+          : 'border-gray-300 hover:border-success-500 bg-white hover:bg-success-50 dark:bg-slate-800 dark:border-slate-700 dark:hover:border-success-500 dark:hover:bg-success-50'"
       >
         <svg v-if="task.is_completed" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -21,8 +21,8 @@
       <div class="flex-1 min-w-0">
         <!-- Task Title -->
         <h3 
-          class="font-semibold text-gray-900 mb-1 text-lg leading-tight"
-          :class="{ 'line-through text-gray-500': task.is_completed }"
+          class="font-semibold text-gray-900 mb-1 text-lg leading-tight dark:text-gray-100"
+          :class="{ 'line-through text-gray-500 dark:text-gray-400': task.is_completed }"
         >
           {{ task.title }}
         </h3>
@@ -30,14 +30,14 @@
         <!-- Task Description -->
         <p 
           v-if="task.description" 
-          class="text-gray-600 mb-3 line-clamp-2"
-          :class="{ 'text-gray-400': task.is_completed }"
+          class="text-gray-600 mb-3 line-clamp-2 dark:text-gray-400"
+          :class="{ 'text-gray-400 dark:text-gray-400': task.is_completed }"
         >
           {{ task.description }}
         </p>
         
         <!-- Task Meta Information -->
-        <div class="flex items-center flex-wrap gap-3">
+        <div class="flex items-center flex-wrap gap-3 dark:text-gray-400">
           <!-- Task Type Badge -->
           <span 
             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
@@ -79,7 +79,7 @@
       <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <button
           @click="$emit('edit', task)"
-          class="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200"
+          class="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 dark:text-gray-400 dark:hover:text-primary-600 dark:hover:bg-primary-50"
           title="Edit task"
         >
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -88,7 +88,7 @@
         </button>
         <button
           @click="$emit('delete', task.id)"
-          class="p-2 text-gray-400 hover:text-danger-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+          class="p-2 text-gray-400 hover:text-danger-600 hover:bg-red-50 rounded-lg transition-all duration-200 dark:text-gray-400 dark:hover:text-danger-600 dark:hover:bg-red-50"
           title="Delete task"
         >
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">

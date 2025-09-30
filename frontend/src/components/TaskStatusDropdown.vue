@@ -3,6 +3,7 @@
     <button
       @click="toggleDropdown"
       class="flex items-center px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 transform hover:scale-105 border border-gray-200 hover:bg-white/80 text-gray-600 hover:text-gray-800 min-w-[120px] justify-between"
+      :class="{ 'dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700 dark:hover:border-slate-500': isOpen }"
     >
       <span>{{ selectedOption.label }}</span>
       <svg 
@@ -21,13 +22,14 @@
         v-if="isOpen"
         :style="dropdownStyle"
         class="fixed bg-white border border-gray-200 rounded-xl shadow-lg z-[9999] overflow-hidden min-w-[120px]"
+        :class="{ 'dark:bg-slate-800 dark:border-slate-700': isOpen }"
       >
         <button
           v-for="option in options"
           :key="option.value"
           @click="selectOption(option)"
           class="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors duration-150 text-sm"
-          :class="{ 'bg-primary-50 text-primary-700 font-medium': modelValue === option.value }"
+          :class="{ 'bg-primary-50 text-primary-700 font-medium': modelValue === option.value, 'dark:bg-slate-800 dark:text-slate-300': isOpen }"
         >
           {{ option.label }}
         </button>

@@ -15,13 +15,7 @@ A comprehensive task management system supporting 4 different task types:
 
 ## Quick Start
 
-1. Clone and setup:
-```bash
-git clone <repository>
-cd daily-task-manager
-```
-
-2. Start with Docker:
+1. Start with docker-compose:
 
 ```docker-compose.yml
 services:
@@ -63,7 +57,7 @@ networks:
 ```
 
 ```bash
-docker-compose up --build
+docker-compose up -d
 ```
 
 3. Access the application:
@@ -115,14 +109,9 @@ REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret-key
 ```
 
-### Frontend (.env)
-```
-VITE_API_URL=http://localhost:3001/api
-```
-
 ### Todo
-- Use dockerhub as deploy
-- Set user personal prefence
-- Language setting
-- Dark theme mod
+- Set user personal prefence, such as default filter / theme
+- Language setting using i18n
+- Review daily task schedule feature & filter untriggered day's task
 - Reward point system
+- better theme and frontend code

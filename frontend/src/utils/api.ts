@@ -12,7 +12,10 @@ import type {
   ResetPasswordData
 } from '@/types'
 
-const API_BASE_URL = '/api'
+// Use absolute URL for development, relative for production
+const API_BASE_URL = import.meta.env.DEV 
+  ? 'http://localhost:3001/api' 
+  : '/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,

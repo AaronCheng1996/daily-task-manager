@@ -63,7 +63,7 @@
   },
   "profile": {
     "title": "Profile",
-    "updateProfile": "Update Profile",
+    "updateProfile": "Update",
     "language": "Language",
     "timezone": "Timezone",
     "changePassword": "Change Password",
