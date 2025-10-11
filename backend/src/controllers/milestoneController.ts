@@ -56,7 +56,7 @@ const milestoneController = {
         try {
             const rawData = req.body.milestoneData || req.body;
             const milestoneData = updateMilestoneSchema.parse(rawData);
-            const milestone = await MilestoneService.updateMilestone(req.params.id, milestoneData);
+            const milestone = await MilestoneService.updateMilestone(req.params.milestoneId, milestoneData);
             res.json({ message: SuccessMessage.MILESTONE_UPDATED, milestone });
         } catch (error) {
             if (error instanceof z.ZodError) {
@@ -83,7 +83,7 @@ const milestoneController = {
     },
     deleteMilestone: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            await MilestoneService.deleteMilestone(req.params.id);
+            await MilestoneService.deleteMilestone(req.params.milestoneId);
             res.json({ message: SuccessMessage.MILESTONE_DELETED });
         } catch (error) {
             logger.error(error);
@@ -92,7 +92,7 @@ const milestoneController = {
     },
     toggleMilestoneCompletion: async (req: AuthRequest, res: Response): Promise<void> => {
         try {
-            await MilestoneService.toggleMilestoneCompletion(req.params.id);
+            await MilestoneService.toggleMilestoneCompletion(req.params.milestoneId);
             res.json({ message: SuccessMessage.TASK_COMPLETION_TOGGLED });
         } catch (error) {
             logger.error(error);

@@ -106,9 +106,9 @@
     </div>
 
     <!-- Tasks List -->
-    <div v-else-if="filteredTasks.length > 0">
+    <div v-else-if="localTasks.length > 0">
       <draggable
-        v-model="filteredTasks"
+        v-model="localTasks"
         item-key="id"
         @end="saveTasksOrder"
         class="space-y-4"
@@ -121,7 +121,18 @@
             class="animate-slide-up flex items-center gap-3"
             :style="`animation-delay: ${Math.min(index * 0.1, 1)}s;`"
           >
-            <div class="task-handle cursor-move flex-shrink-0 flex items-center h-full">⠿</div>
+            <div class="flex flex-col items-center gap-1 flex-shrink-0">
+              <button
+                @click="sendTaskToTop(element)"
+                :title="'Send to top'"
+                class="text-gray-400 hover:text-primary-600 transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+              </button>
+              <div class="task-handle cursor-move flex items-center">⠿</div>
+            </div>
             <div class="flex-1">
               <HabitTaskItem
                 v-if="element.task_type === TaskType.HABIT"
@@ -308,6 +319,13 @@ const filteredTasks = computed(() => {
   return tasks
 })
 
+const localTasks = ref<Task[]>([...filteredTasks.value])
+
+watch(filteredTasks, (newValue) => {
+  localTasks.value = [...newValue]
+})
+
+
 const handleToggleTask = async (taskId: string) => {
   try {
     await taskStore.toggleTaskCompletion(taskId)
@@ -344,34 +362,31 @@ const handleTaskUpdated = () => {
 // Removed unused function - handleTaskRefresh
 
 const saveTasksOrder = async (event: any) => {
-  const newIndex = event.newIndex;
-  const container = event.to;
-  const movedEl: HTMLElement = event.item;
-  const movedIdStr = movedEl.id;
-  if (!movedIdStr) {
-    throw new Error("Dragged element missing data-id attribute");
+  const { oldIndex, newIndex } = event
+
+  if (oldIndex === newIndex) return
+
+  const tasks = localTasks.value
+  const movedTask = tasks[newIndex]
+
+  const prevTask = tasks[newIndex + 1] || null
+  const nextTask = tasks[newIndex - 1] || null
+
+  await taskApi.reorderTasks(movedTask.id, prevTask?.order_index ?? null, nextTask?.order_index ?? null)
+  taskStore.fetchTasks()
+}
+
+const sendTaskToTop = async (task: Task) => {
+  const tasks = localTasks.value
+  
+  if (tasks[0]?.id === task.id) {
+    return
   }
-  const prevDom = container.children[newIndex - 1] as HTMLElement | undefined;
-  const nextDom = container.children[newIndex + 1] as HTMLElement | undefined;
-  const prevOrderIndex = prevDom && prevDom.dataset.orderIndex !== undefined
-      ? Number(prevDom.dataset.orderIndex)
-      : null;
-  const nextOrderIndex = nextDom && nextDom.dataset.orderIndex !== undefined
-      ? Number(nextDom.dataset.orderIndex)
-      : null;
-  console.log(movedIdStr, prevOrderIndex, nextOrderIndex)
-  await taskApi.reorderTasks(movedIdStr, prevOrderIndex, nextOrderIndex)
-  filteredTasks.value.find(task => task.id === movedIdStr)!.order_index = newIndex
-  if (newIndex !== undefined && newIndex !== null) {
-    const movedTaskIdx = filteredTasks.value.findIndex(task => task.id === movedIdStr)
-    if (movedTaskIdx !== -1 && movedTaskIdx !== newIndex) {
-      const [movedTask] = filteredTasks.value.splice(movedTaskIdx, 1)
-      filteredTasks.value.splice(newIndex, 0, movedTask)
-      filteredTasks.value.forEach((task, idx) => {
-        task.order_index = idx
-      })
-    }
-  }
+  
+  const topTask = tasks[0]
+  
+  await taskApi.reorderTasks(task.id, topTask?.order_index ?? null, null)
+  taskStore.fetchTasks()
 }
 
 // Watch for task status filter changes and save to preferences

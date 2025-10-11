@@ -9,7 +9,7 @@ export const useTaskStore = defineStore('task', () => {
   const error = ref<string | null>(null)
 
   const sortedTasks = computed(() => {
-    return tasks.value.sort((a, b) => a.order_index - b.order_index)
+    return tasks.value.sort((a, b) => b.order_index - a.order_index)
   })
 
   const tasksByType = computed(() => {

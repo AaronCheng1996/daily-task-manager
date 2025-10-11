@@ -11,6 +11,7 @@ import Env from './config/env';
 import { initRedis } from './config/redis';
 import router from './route';
 import logger from './utils/logger';
+import { TaskService } from './services/taskService';
 
 dotenv.config();
 
@@ -56,7 +57,7 @@ const startServer = async () => {
   try {
     await initDatabase();
     await initRedis();
-    
+    await TaskService.initializeTaskOrderIndex();
     app.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
     });

@@ -135,6 +135,13 @@ export class TaskService {
     return task?.order_index ?? 0;
   }
 
+  static async initializeTaskOrderIndex(): Promise<void> {
+    const tasks = await prisma.task.findFirst({
+      orderBy: { order_index: 'desc' }
+    });
+    lastTaskOrderIndex = tasks?.order_index ?? 0;
+  }
+
   static async reorderTasks(taskId: string, prevOrderIndex: number | null, nextOrderIndex: number | null): Promise<void> {
     let orderIndex = 0;
     if (prevOrderIndex !== null && nextOrderIndex !== null) {

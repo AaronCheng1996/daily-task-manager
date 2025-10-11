@@ -15,7 +15,44 @@ A comprehensive task management system supporting 4 different task types:
 
 ## Quick Start
 
-1. Start with docker-compose:
+```
+git clone <repo>
+cd daily-task-manager
+docker compose up -d
+```
+
+## Setup
+
+1. Setup Enviroment and Database with docker-compose:
+
+```docker-compose.yml
+networks:
+  shared_net:
+    name: shared_net
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=main
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - shared_net
+
+  redis:
+    image: redis:7.4-rc2-alpine
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - shared_net
+```
+
+2. Start with docker-compose:
 
 ```docker-compose.yml
 services:
@@ -83,6 +120,11 @@ docker-compose up -d
 
 ## Features
 
+### Task Management
+- **Drag-and-drop reordering**: Organize tasks by dragging them to desired positions
+- **Send to top**: Quick button to move any task to the top of the list
+- **Search and filter**: Find tasks by title/description, filter by type and completion status
+
 ### Task Types
 - **Habit Tracking**: Time-based completion tracking with good/bad habit support
 - **Daily Tasks**: Flexible recurrence patterns (daily, weekly, monthly, custom)
@@ -113,5 +155,12 @@ JWT_SECRET=your-secret-key
 - Set user personal prefence, such as default filter / theme
 - Language setting using i18n
 - Review daily task schedule feature & filter untriggered day's task
-- Reward point system
 - better theme and frontend code
+
+### Planning
+- Add star task that show on Home page
+- Home page format
+- Reward point system
+
+### Issue
+- daily task didn't update statistics

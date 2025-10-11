@@ -133,7 +133,7 @@
 
         <div v-if="props.task.milestones && props.task.milestones.length > 0" class="space-y-2">
           <draggable
-            v-model="validMilestones"
+            v-model="props.task.milestones"
             @end="saveMilestonesOrder"
             handle=".task-handle"
             item-key="id"
@@ -248,10 +248,12 @@ import { ref, computed, nextTick } from 'vue'
 import { format, parseISO } from 'date-fns'
 import type { LongTermTask, Milestone } from '@/types'
 import { taskApi } from '@/utils/api'
-
+import { useTaskStore } from '@/stores/taskStore'
 interface Props {
   task: LongTermTask
 }
+
+const taskStore = useTaskStore()
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
@@ -269,10 +271,6 @@ const addMilestoneButton = ref<HTMLButtonElement | null>(null)
 const newMilestone = ref({
   title: '',
   description: ''
-})
-
-const validMilestones = computed(() => {
-  return props.task.milestones?.filter(milestone => milestone && milestone.id) || []
 })
 
 const progressClass = computed(() => {
@@ -322,6 +320,8 @@ const recalculateStatistics = () => {
     props.task.stat.progress = props.task.stat.totalMilestones > 0 
       ? Number(((props.task.stat.completedMilestones / props.task.stat.totalMilestones) * 100).toFixed(2))
       : 0
+
+    if (props.task.stat.progress >= 100) taskStore.fetchTasks()
   }
 }
 
@@ -354,7 +354,7 @@ const toggleMilestone = async (milestoneId: string) => {
   loadingMilestone.value = true
   
   try {
-    await taskApi.toggleMilestoneCompletion(milestoneId, props.task.id)
+    await taskApi.toggleMilestoneCompletion(props.task.id, milestoneId)
     
     const milestone = props.task.milestones?.find(m => m.id === milestoneId)
     if (milestone) {
@@ -380,7 +380,7 @@ const deleteMilestone = async (milestoneId: string) => {
   loadingMilestone.value = true
   
   try {
-    await taskApi.deleteMilestone(milestoneId, props.task.id)
+    await taskApi.deleteMilestone(props.task.id, milestoneId)
     let index = -1
     if (props.task.milestones) {
       index = props.task.milestones.findIndex(m => m.id === milestoneId)
@@ -467,20 +467,17 @@ const formatProgress = (progress: number): string => {
 }
 
 const saveMilestonesOrder = async () => {
-  if (props.task.milestones && validMilestones.value) {
-    props.task.milestones.length = 0;
-    props.task.milestones.push(...validMilestones.value);
-    props.task.milestones.forEach((m, idx) => {
-      m.order_index = idx;
-    });
+  try {
+    const milestoneOrders = props.task.milestones?.map((milestone, index) => ({
+      id: milestone.id,
+      order_index: index
+    }))
+    if (!milestoneOrders) return
+    await taskApi.reorderMilestones(props.task.id, milestoneOrders)
+  } catch (error) {
+    console.error('Failed to reorder milestones:', error)
+    alert('Failed to save milestone order. Please refresh the page.')
   }
-
-  const reordered = validMilestones.value.map((m, idx) => ({
-    id: m.id,
-    order_index: idx,
-  }));
-
-  await taskApi.reorderMilestones(props.task.id, reordered);
 }
 
 </script>
