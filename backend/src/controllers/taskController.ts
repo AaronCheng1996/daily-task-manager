@@ -54,11 +54,13 @@ const checkAndRefreshDailyTasks = async (userId: string): Promise<void> => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { timezone: true }
+            select: { preference_setting: true }
         });
 
         if (user) {
-            await DailyTaskService.checkAndRefreshDailyTaskForUser(userId, user.timezone);
+            const preferenceSetting = user.preference_setting as { timezone?: string };
+            const timezone = preferenceSetting?.timezone || 'UTC';
+            await DailyTaskService.checkAndRefreshDailyTaskForUser(userId, timezone);
             dailyTaskRefreshCache.set(userId, now);
         }
     } catch (error) {

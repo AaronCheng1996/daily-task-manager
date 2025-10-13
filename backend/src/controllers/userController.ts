@@ -105,8 +105,13 @@ const userController = {
             const updateSchema = z.object({
             username: z.string().min(3).max(50).optional(),
             email: z.string().email().optional(),
-            preferred_language: z.string().max(10).optional(),
-            timezone: z.string().max(50).optional()
+            preference_setting: z.object({
+                language: z.string().max(10).optional(),
+                timezone: z.string().max(50).optional(),
+                theme: z.enum(['light', 'dark', 'auto']).optional(),
+                defaultTaskFilter: z.enum(['incomplete', 'complete', 'all']).optional(),
+                defaultTaskType: z.enum(['todo', 'habit', 'daily', 'longterm', 'all']).optional()
+            }).optional()
             });
             
             const updates = updateSchema.parse(req.body);

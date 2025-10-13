@@ -113,8 +113,6 @@ docker-compose up -d
 ```
 ├── frontend/          # Vue 3 + TypeScript
 ├── backend/           # Express + TypeScript API
-├── database/          # PostgreSQL schemas
-├── docker/            # Docker configurations
 └── docker-compose.yml # Multi-container setup
 ```
 
@@ -152,8 +150,6 @@ JWT_SECRET=your-secret-key
 ```
 
 ### Todo
-- better theme and frontend code
-- Set user personal prefence, such as default filter / theme
 - Language setting using i18n
 - Review daily task schedule feature & filter untriggered day's task
 
@@ -165,3 +161,4 @@ JWT_SECRET=your-secret-key
 
 ### Issue
 - daily task didn't update statistics
+- daily task statistics style in dark mode

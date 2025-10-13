@@ -35,7 +35,7 @@
             <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('profile.language') }}
             </label>
-            <select id="language" v-model="form.preferred_language" class="form-input">
+            <select id="language" v-model="form.language" class="form-input">
               <option value="en">🇺🇸 English</option>
               <option value="zhTW">🇹🇼 Traditional Chinese</option>
             </select>
@@ -56,62 +56,41 @@
           </div>
         </div>
 
-        <h2 class="text-xl font-semibold mb-6">Preferences</h2>
+        <h2 class="text-xl font-semibold mb-6 mt-8">Preferences</h2>
         
-        <div class="space-y-6">
-          <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800/50 rounded-xl">
-            <div>
-              <h3 class="font-medium text-gray-800 dark:text-gray-200">Theme</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Choose your preferred theme</p>
-            </div>
-            <div class="flex items-center space-x-3">
-              <ThemeToggle :show-advanced="true" />
-              <span class="text-sm text-gray-500 dark:text-gray-400">
-                {{ themeStore.isDark ? 'Dark Mode' : 'Light Mode' }}
-                {{ themeStore.theme === 'auto' ? '(Auto)' : '' }}
-              </span>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Theme
+            </label>
+            <select id="theme" v-model="form.theme" class="form-input">
+              <option value="auto">🌓 Auto (System)</option>
+              <option value="light">☀️ Light</option>
+              <option value="dark">🌙 Dark</option>
+            </select>
           </div>
 
-          <!-- Task Preferences -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-              <label for="defaultTaskFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Default Task Filter
-              </label>
-              <select
-                id="defaultTaskFilter"
-                v-model="preferencesStore.preferences.defaultTaskFilter"
-                class="form-input"
-              >
-                <option value="incomplete">Incomplete Only</option>
-                <option value="complete">Complete Only</option>
-                <option value="all">All Tasks</option>
-              </select>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Default filter when opening the tasks page
-              </p>
-            </div>
-            
-            <div class="space-y-2">
-              <label for="defaultTaskType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Default Task Type
-              </label>
-              <select
-                id="defaultTaskType"
-                v-model="preferencesStore.preferences.defaultTaskType"
-                class="form-input"
-              >
-                <option value="todo">Todo</option>
-                <option value="habit">Habits</option>
-                <option value="daily">Daily Tasks</option>
-                <option value="longterm">Long-term</option>
-                <option value="all">All Types</option>
-              </select>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                Default task type tab to show first
-              </p>
-            </div>
+          <div>
+            <label for="defaultTaskFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Default Task Filter
+            </label>
+            <select id="defaultTaskFilter" v-model="form.defaultTaskFilter" class="form-input">
+              <option value="incomplete">Incomplete Only</option>
+              <option value="complete">Complete Only</option>
+              <option value="all">All Tasks</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="defaultTaskType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Default Task Type
+            </label>
+            <select id="defaultTaskType" v-model="form.defaultTaskType" class="form-input">
+              <option value="todo">Todo</option>
+              <option value="habit">Habits</option>
+              <option value="daily">Daily Tasks</option>
+              <option value="longterm">Long-term</option>
+            </select>
           </div>
         </div>
         
@@ -228,12 +207,9 @@
 
 <script setup lang="ts">
 import { useProfileView } from './ProfileView'
-import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const {
   userStore,
-  themeStore,
-  preferencesStore,
   form,
   passwordForm,
   successMessage,

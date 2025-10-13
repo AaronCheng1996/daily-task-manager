@@ -97,6 +97,25 @@ export const usePreferencesStore = defineStore('preferences', () => {
     watch(preferences, savePreferences, { deep: true })
   }
 
+  // Sync preferences from user's preference_setting
+  const syncFromUserPreferences = (userPreferenceSetting: any) => {
+    if (!userPreferenceSetting) return
+    
+    const updates: Partial<UserPreferences> = {}
+    
+    if (userPreferenceSetting.defaultTaskFilter) {
+      updates.defaultTaskFilter = userPreferenceSetting.defaultTaskFilter
+    }
+    if (userPreferenceSetting.defaultTaskType) {
+      updates.defaultTaskType = userPreferenceSetting.defaultTaskType
+    }
+    
+    if (Object.keys(updates).length > 0) {
+      preferences.value = { ...preferences.value, ...updates }
+      savePreferences()
+    }
+  }
+  
   // Future: Sync preferences with backend
   const syncWithBackend = async () => {
     loading.value = true
@@ -124,6 +143,7 @@ export const usePreferencesStore = defineStore('preferences', () => {
     updatePreferences,
     resetPreferences,
     initializePreferences,
+    syncFromUserPreferences,
     syncWithBackend,
     
     // Getters

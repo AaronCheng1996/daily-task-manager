@@ -80,9 +80,8 @@ export class UserService {
         id: true,
         username: true,
         email: true,
-        preferred_language: true,
+        preference_setting: true,
         points: true,
-        timezone: true,
         created_at: true,
         updated_at: true
       }
@@ -91,7 +90,7 @@ export class UserService {
     return user;
   }
 
-  static async updateUser(userId: string, updates: Partial<Pick<User, 'username' | 'email' | 'preferred_language' | 'timezone'>>): Promise<Omit<User, 'password_hash'>> {
+  static async updateUser(userId: string, updates: Partial<Pick<User, 'username' | 'email' | 'preference_setting'>>): Promise<Omit<User, 'password_hash'>> {
     const validUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
     );
@@ -107,9 +106,8 @@ export class UserService {
         id: true,
         username: true,
         email: true,
-        preferred_language: true,
+        preference_setting: true,
         points: true,
-        timezone: true,
         created_at: true,
         updated_at: true
       }

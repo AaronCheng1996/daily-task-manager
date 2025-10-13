@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, LoginCredentials, RegisterData, ResetPasswordData } from '@/types'
 import { authApi } from '@/utils/api'
+import { usePreferencesStore } from './preferencesStore'
+import { useThemeStore } from './themeStore'
 
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
@@ -16,6 +18,20 @@ export const useUserStore = defineStore('user', () => {
     token.value = authToken
     localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('token', authToken)
+    
+    // Sync user preferences with stores
+    const preferencesStore = usePreferencesStore()
+    const themeStore = useThemeStore()
+    
+    if (userData.preference_setting) {
+      // Sync theme
+      if (userData.preference_setting.theme) {
+        themeStore.setTheme(userData.preference_setting.theme)
+      }
+      
+      // Sync task preferences
+      preferencesStore.syncFromUserPreferences(userData.preference_setting)
+    }
   }
 
   const clearUser = () => {
@@ -84,6 +100,21 @@ export const useUserStore = defineStore('user', () => {
       const response = await authApi.updateProfile(updates)
       user.value = response.user!
       localStorage.setItem('user', JSON.stringify(response.user))
+      
+      // Sync user preferences with stores
+      const preferencesStore = usePreferencesStore()
+      const themeStore = useThemeStore()
+      
+      if (response.user?.preference_setting) {
+        // Sync theme
+        if (response.user.preference_setting.theme) {
+          themeStore.setTheme(response.user.preference_setting.theme)
+        }
+        
+        // Sync task preferences
+        preferencesStore.syncFromUserPreferences(response.user.preference_setting)
+      }
+      
       return response
     } catch (err: any) {
       error.value = err.response?.data?.error || 'Profile update failed'

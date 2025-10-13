@@ -16,8 +16,11 @@ export function useProfileView() {
   const form = reactive({
     username: '',
     email: '',
-    preferred_language: 'en',
-    timezone: 'UTC'
+    language: 'en',
+    timezone: 'UTC',
+    theme: 'auto' as 'light' | 'dark' | 'auto',
+    defaultTaskFilter: 'incomplete' as 'incomplete' | 'complete' | 'all',
+    defaultTaskType: 'todo' as 'todo' | 'habit' | 'daily' | 'longterm' | 'all'
   })
 
   const passwordForm = reactive({
@@ -34,10 +37,14 @@ export function useProfileView() {
 
   const resetForm = () => {
     if (userStore.user) {
+      const prefs = userStore.user.preference_setting || {}
       form.username = userStore.user.username
       form.email = userStore.user.email
-      form.preferred_language = userStore.user.preferred_language
-      form.timezone = userStore.user.timezone
+      form.language = prefs.language || 'en'
+      form.timezone = prefs.timezone || 'UTC'
+      form.theme = prefs.theme || themeStore.theme || 'auto'
+      form.defaultTaskFilter = prefs.defaultTaskFilter || preferencesStore.preferences.defaultTaskFilter || 'incomplete'
+      form.defaultTaskType = prefs.defaultTaskType || preferencesStore.preferences.defaultTaskType || 'todo'
     }
   }
 
@@ -53,7 +60,20 @@ export function useProfileView() {
     successMessage.value = ''
     
     try {
-      await userStore.updateProfile(form)
+      await userStore.updateProfile({
+        username: form.username,
+        email: form.email,
+        preference_setting: {
+          language: form.language,
+          timezone: form.timezone,
+          theme: form.theme,
+          defaultTaskFilter: form.defaultTaskFilter,
+          defaultTaskType: form.defaultTaskType
+        }
+      })
+      
+      // userStore.updateProfile now handles syncing with themeStore and preferencesStore
+      
       successMessage.value = 'Updated successfully!'
       setTimeout(() => {
         successMessage.value = ''

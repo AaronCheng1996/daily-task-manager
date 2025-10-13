@@ -31,12 +31,20 @@ export enum TimeRangeType {
 }
 
 // User types
+export interface UserPreferenceSetting {
+  language?: string
+  timezone?: string
+  theme?: 'light' | 'dark' | 'auto'
+  defaultTaskFilter?: 'incomplete' | 'complete' | 'all'
+  defaultTaskType?: 'todo' | 'habit' | 'daily' | 'longterm' | 'all'
+}
+
 export interface User {
   id: string
   username: string
   email: string
-  preferred_language: string
-  timezone: string
+  preference_setting: UserPreferenceSetting
+  points: number
   created_at: string
   updated_at: string
 }

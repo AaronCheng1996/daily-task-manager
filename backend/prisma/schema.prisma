@@ -42,17 +42,16 @@ enum TimeRangeType {
 }
 
 model User {
-  id                String   @id @db.VarChar(26)
-  username          String   @unique @db.VarChar(50)
-  email             String   @unique @db.VarChar(255)
-  password_hash     String   @db.VarChar(255)
-  preferred_language String  @default("en") @db.VarChar(10)
-  points            Int      @default(0)
-  timezone          String   @default("UTC") @db.VarChar(50)
-  created_at        DateTime @default(now()) @db.Timestamptz(6)
-  updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  id                  String   @id @db.VarChar(26)
+  username            String   @unique @db.VarChar(50)
+  email               String   @unique @db.VarChar(255)
+  password_hash       String   @db.VarChar(255)
+  points              Int      @default(0)
+  preference_setting  Json     @default("{}")
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime @default(now()) @updatedAt @db.Timestamptz(6)
 
-  tasks             Task[]
+  tasks               Task[]
 
   @@map("users")
 }
