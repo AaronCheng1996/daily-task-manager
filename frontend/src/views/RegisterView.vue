@@ -69,25 +69,11 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/userStore'
+import { useRegisterView } from './RegisterView'
 
-const router = useRouter()
-const userStore = useUserStore()
-
-const form = reactive({
-  username: '',
-  email: '',
-  password: ''
-})
-
-const handleRegister = async () => {
-  try {
-    await userStore.register(form)
-    router.push('/')
-  } catch (error) {
-    // Error is handled by the store
-  }
-}
+const {
+  userStore,
+  form,
+  handleRegister
+} = useRegisterView()
 </script>

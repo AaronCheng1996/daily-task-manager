@@ -152,15 +152,16 @@ JWT_SECRET=your-secret-key
 ```
 
 ### Todo
+- better theme and frontend code
 - Set user personal prefence, such as default filter / theme
 - Language setting using i18n
 - Review daily task schedule feature & filter untriggered day's task
-- better theme and frontend code
 
 ### Planning
 - Add star task that show on Home page
 - Home page format
 - Reward point system
+- Auto deploy on github
 
 ### Issue
 - daily task didn't update statistics

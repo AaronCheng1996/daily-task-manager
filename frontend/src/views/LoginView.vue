@@ -53,20 +53,11 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/userStore'
+import { useLoginView } from './LoginView'
 
-const router = useRouter()
-const userStore = useUserStore()
-
-const form = reactive({
-  usernameOrEmail: '',
-  password: ''
-})
-
-const handleLogin = async () => {
-  await userStore.login(form)
-  router.push('/')
-}
+const {
+  userStore,
+  form,
+  handleLogin
+} = useLoginView()
 </script>
