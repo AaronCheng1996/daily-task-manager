@@ -5,10 +5,11 @@
       
       <form @submit.prevent="handleRegister" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="username" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
             {{ $t('auth.username') }}
           </label>
           <input
+            id="username"
             v-model="form.username"
             type="text"
             class="form-input"
@@ -20,10 +21,11 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
             {{ $t('auth.email') }}
           </label>
           <input
+            id="email"
             v-model="form.email"
             type="email"
             class="form-input"
@@ -33,10 +35,11 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
             {{ $t('auth.password') }}
           </label>
           <input
+            id="password"
             v-model="form.password"
             type="password"
             class="form-input"

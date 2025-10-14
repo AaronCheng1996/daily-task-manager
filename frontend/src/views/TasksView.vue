@@ -6,7 +6,7 @@
         <h1 class="text-2xl md:text-3xl font-bold mb-1">
           <span class="gradient-text">{{ $t('tasks.title') }}</span>
         </h1>
-        <p class="text-gray-600 text-sm">Manage and organize all your tasks in one place</p>
+        <p class="text-gray-600 text-sm">{{ $t('tasks.manageAndOrganizeAllYourTasksInOnePlace') }}</p>
       </div>
       <button
         @click="showCreateTask = true"
@@ -30,7 +30,7 @@
           <input
             v-model="searchKeyword"
             type="text"
-            placeholder="Search tasks by title or description..."
+            :placeholder="$t('tasks.searchTasksByTitleOrDescription')"
             class="w-full pl-10 pr-4 py-3 bg-white/60 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
           />
           <button
@@ -95,13 +95,13 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       </div>
-      <h3 class="text-lg font-medium text-gray-900 mb-2">Something went wrong</h3>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">{{ $t('common.somethingWentWrong') }}</h3>
       <p class="text-red-600 mb-6">{{ taskStore.error }}</p>
       <button @click="taskStore.fetchTasks()" class="btn-primary">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
-        Try Again
+        {{ $t('common.tryAgain') }}
       </button>
     </div>
 
@@ -124,7 +124,7 @@
             <div class="flex flex-col items-center gap-1 flex-shrink-0">
               <button
                 @click="sendTaskToTop(element)"
-                :title="'Send to top'"
+                :title="$t('tasks.sendToTop')"
                 class="text-gray-400 hover:text-primary-600 transition-colors p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,16 +175,16 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
       </div>
-      <h3 class="text-2xl font-bold text-gray-900 mb-3">No tasks found</h3>
+      <h3 class="text-2xl font-bold text-gray-900 mb-3">{{ $t('tasks.noTasksFound') }}</h3>
       <p class="text-gray-500 mb-8 max-w-md mx-auto">
         <span v-if="searchKeyword.trim()">
-          No tasks match your search "{{ searchKeyword }}". Try adjusting your search terms or create a new task.
+          {{ $t('tasks.noTasksMatchYourSearch', { searchKeyword }) }}
         </span>
         <span v-else-if="activeFilter === 'all'">
-          You haven't created any tasks yet. Get started by creating your first task!
+          {{ $t('tasks.youHaveNotCreatedAnyTasksYet') }}
         </span>
         <span v-else>
-          No {{ filters.find(f => f.key === activeFilter)?.label.toLowerCase() }} tasks found. Try a different filter or create a new task.
+          {{ $t('tasks.noTasksFound', { filter: filters.find(f => f.key === activeFilter)?.label.toLowerCase() }) }}
         </span>
       </p>
       <button

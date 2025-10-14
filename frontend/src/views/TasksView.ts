@@ -4,11 +4,12 @@ import { usePreferencesStore, type TaskStatusFilter, type DefaultTaskType } from
 import { TaskType } from '@/types'
 import type { Task } from '@/types'
 import { taskApi } from '@/utils/api'
+import { useI18n } from 'vue-i18n'
 
 export function useTasksView() {
   const taskStore = useTaskStore()
   const preferencesStore = usePreferencesStore()
-  
+  const { t } = useI18n()
   const showCreateTask = ref(false)
   const showEditTask = ref(false)
   const editingTask = ref<Task | null>(null)
@@ -32,22 +33,22 @@ export function useTasksView() {
     return [
       {
         key: 'todo',
-        label: 'Todo',
+        label: t('tasks.todo'),
         count: getFilteredCount(TaskType.TODO)
       },
       {
         key: 'habit',
-        label: 'Habits',
+        label: t('tasks.habits'),
         count: getFilteredCount(TaskType.HABIT)
       },
       {
         key: 'daily',
-        label: 'Daily Tasks',
+        label: t('tasks.dailyTasks'),
         count: getFilteredCount(TaskType.DAILY_TASK)
       },
       {
         key: 'longterm',
-        label: 'Long-term',
+        label: t('tasks.longterms'),
         count: getFilteredCount(TaskType.LONG_TERM)
       }
     ]
@@ -110,7 +111,7 @@ export function useTasksView() {
   }
 
   const handleDeleteTask = async (taskId: string) => {
-    if (confirm('Are you sure you want to delete this task?')) {
+    if (confirm(t('common.areYouSureYouWantToDeleteThisTask'))) {
       try {
         await taskStore.deleteTask(taskId)
       } catch (error) {

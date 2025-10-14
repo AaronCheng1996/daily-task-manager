@@ -22,10 +22,10 @@
               {{ task.title }}
             </h3>
             <span class="task-item-badge text-xs bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 px-2 py-1 rounded-full">
-              Daily
+              {{ $t('tasks.taskTypes.DAILY_TASK') }}
             </span>
             <span v-if="task.importance > 1" class="text-xs text-warning-600 dark:text-warning-400">
-              Priority: {{ task.importance }}
+              {{ $t('tasks.priority') }}: {{ task.importance }}
             </span>
           </div>
           
@@ -36,23 +36,23 @@
           <div class="flex items-center space-x-4 mt-2 text-xs task-item-meta text-gray-500 dark:text-gray-400">
             <span>{{ getRecurrenceDescription() }}</span>
             <span v-if="task.stat?.nextOccurrence">
-              Next: {{ formatDate(task.stat.nextOccurrence) }}
+              {{ $t('tasks.daily.next') }}: {{ formatDate(task.stat.nextOccurrence) }}
             </span>
           </div>
           
           <div v-if="task.stat" class="mt-2 space-y-1">
             <div class="flex items-center space-x-4 text-sm">
               <span class="task-item-meta text-gray-600 dark:text-gray-400">
-                Rate: <span class="font-medium text-blue-600 dark:text-blue-400">{{ task.stat.completionRate }}%</span>
+                {{ $t('tasks.habit.rate') }}: <span class="font-medium text-blue-600 dark:text-blue-400">{{ task.stat.completionRate }}%</span>
               </span>
               <span class="task-item-meta text-gray-600 dark:text-gray-400">
-                Streak: <span class="font-medium" :class="streakClass">{{ task.stat.currentStreak }}</span>
+                {{ $t('tasks.habit.streak') }}: <span class="font-medium" :class="streakClass">{{ task.stat.currentStreak }}</span>
               </span>
               <span class="text-gray-600">
-                Best: <span class="font-medium text-green-600">{{ task.stat.longestStreak }}</span>
+                {{ $t('tasks.habit.best') }}: <span class="font-medium text-green-600">{{ task.stat.longestStreak }}</span>
               </span>
               <span v-if="task.stat.missedStreak > 0" class="text-gray-600">
-                Missed: <span class="font-medium text-red-500">{{ task.stat.missedStreak }}</span>
+                {{ $t('tasks.habit.missed') }}: <span class="font-medium text-red-500">{{ task.stat.missedStreak }}</span>
               </span>
             </div>
           </div>
@@ -63,7 +63,7 @@
         <button
           @click="showStatistics = !showStatistics"
           class="p-2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-600"
-          title="View statistics"
+          :title="$t('tasks.habit.viewStatistics')"
         >
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
             <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
@@ -90,13 +90,13 @@
     </div>
 
     <div v-if="showStatistics && task.stat" class="mt-4 pt-4 border-t border-gray-100">
-      <h4 class="text-sm font-medium text-gray-700 mb-2 dark:text-gray-400">Recent History (30 days)</h4>
+      <h4 class="text-sm font-medium text-gray-700 mb-2 dark:text-gray-400">{{ $t('tasks.daily.recentHistory') }} (30 {{ $t('tasks.days') }})</h4>
       
       <div class="grid grid-cols-7 gap-1 text-xs">
         <div 
           v-for="record in task.stat.recentHistory.slice(-21)" 
           :key="record.date"
-          :title="`${formatDate(record.date)}: ${record.completed ? 'Completed' : 'Not completed'}`"
+          :title="`${formatDate(record.date)}: ${record.completed ? $t('tasks.completed') : $t('tasks.daily.notCompleted')}`"
           class="w-6 h-6 rounded-sm border flex items-center justify-center cursor-help"
           :class="{
             'bg-green-200 border-green-300': record.completed && record.expected,
@@ -113,8 +113,8 @@
       </div>
       
       <div class="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
-        <span>{{ task.stat.recentHistory.filter(r => r.completed).length }} completed</span>
-        <span>{{ task.stat.recentHistory.length }} expected</span>
+        <span>{{ task.stat.recentHistory.filter(r => r.completed).length }} {{ $t('tasks.completed') }}</span>
+        <span>{{ task.stat.recentHistory.length }} {{ $t('tasks.daily.expected') }}</span>
       </div>
     </div>
   </div>

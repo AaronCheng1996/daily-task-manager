@@ -19,7 +19,7 @@ export function useCreateTaskModal(emit: EmitFn) {
     description: '',
     task_type: TaskType.TODO,
     importance: 1,
-    // TODO fields
+    
     due_at: '',
     // HABIT fields
     habit_type: 'GOOD',
@@ -39,7 +39,6 @@ export function useCreateTaskModal(emit: EmitFn) {
     target_completion_at: ''
   })
 
-  // Helper methods for handling selections
   const toggleDayOfWeek = (index: number) => {
     const indexInArray = form.recurrence_days_of_week.indexOf(index)
     if (indexInArray > -1) {

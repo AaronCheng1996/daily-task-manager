@@ -150,7 +150,7 @@ JWT_SECRET=your-secret-key
 ```
 
 ### Todo
-- Language setting using i18n
+- css classification
 - Review daily task schedule feature & filter untriggered day's task
 
 ### Planning

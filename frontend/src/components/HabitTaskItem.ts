@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { format, parseISO } from 'date-fns'
 import type { HabitTask, HabitStatistics } from '@/types'
 import { taskApi } from '@/utils/api'
+import { useI18n } from 'vue-i18n'
 
 type EmitFn = {
   (evt: 'edit', habit: HabitTask): void
@@ -14,6 +15,7 @@ interface UseHabitTaskItemProps {
 }
 
 export function useHabitTaskItem(props: UseHabitTaskItemProps, emit: EmitFn) {
+  const { t } = useI18n()
   const loading = ref(false)
   const showStatistics = ref(false)
 
@@ -43,9 +45,9 @@ export function useHabitTaskItem(props: UseHabitTaskItemProps, emit: EmitFn) {
       console.error('Habit completion failed:', error)
       
       if (error.response?.data?.error === 'Habit completion cannot be undone') {
-        alert('習慣完成記錄無法撤銷')
+        alert(t('tasks.habit.habitCompletionCannotBeUndone'))
       } else {
-        alert('記錄完成失敗，請稍後再試')
+        alert(t('tasks.habit.habitCompletionFailed'))
       }
     } finally {
       loading.value = false
@@ -65,17 +67,17 @@ export function useHabitTaskItem(props: UseHabitTaskItemProps, emit: EmitFn) {
     if (!props.habit.stat) return ''
     
     if (props.habit.habit_type === 'GOOD') {
-      return props.habit.stat.isSuccessful ? 'Target achieved!' : 'Keep going!'
+      return props.habit.stat.isSuccessful ? t('tasks.habit.targetAchieved') : t('tasks.habit.keepGoing')
     } else {
-      return props.habit.stat.isSuccessful ? 'Under control!' : 'Need improvement'
+      return props.habit.stat.isSuccessful ? t('tasks.habit.underControl') : t('tasks.habit.needImprovement')
     }
   }
 
   const formatDaysSinceCompletion = (days: number): string => {
-    if (days < 0) return 'Never'
-    if (days === 0) return 'Today'
-    if (days === 1) return '1 day ago'
-    return `${days} days ago`
+    if (days < 0) return t('tasks.habit.never')
+    if (days === 0) return t('tasks.habit.today')
+    if (days === 1) return t('tasks.habit.oneDayAgo')
+    return `${days} ${t('tasks.habit.daysAgo')}`
   }
 
   const formatDate = (dateStr: string): string => {

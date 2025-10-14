@@ -16,10 +16,11 @@
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('tasks.taskTitle') }}
             </label>
             <input
+              id="title"
               v-model="form.title"
               type="text"
               class="form-input"
@@ -30,10 +31,11 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('tasks.description') }}
             </label>
             <textarea
+              id="description"
               v-model="form.description"
               class="form-input"
               rows="3"
@@ -42,10 +44,10 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Task Type
+            <label for="task_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ $t('tasks.taskType') }}
             </label>
-            <select v-model="form.task_type" class="form-input">
+            <select id="task_type" v-model="form.task_type" class="form-input">
               <option value="TODO">{{ $t('tasks.taskTypes.TODO') }}</option>
               <option value="HABIT">{{ $t('tasks.taskTypes.HABIT') }}</option>
               <option value="DAILY_TASK">{{ $t('tasks.taskTypes.DAILY_TASK') }}</option>
@@ -54,10 +56,11 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="importance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ $t('tasks.importance') }} (1-5)
             </label>
             <input
+              id="importance"
               v-model.number="form.importance"
               type="number"
               min="1"
@@ -66,25 +69,25 @@
             />
           </div>
 
-          <!-- TODO specific fields -->
           <div v-if="form.task_type === 'TODO'">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ $t('tasks.dueDate') }} (Optional)
+            <label for="due_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ $t('tasks.dueDate') }} {{ $t('common.optional') }}
             </label>
             <input
+              id="due_at"
               v-model="form.due_at"
               type="datetime-local"
               class="form-input"
             />
           </div>
 
-          <!-- DAILY_TASK specific fields -->
           <div v-if="form.task_type === 'DAILY_TASK'" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Target Date
+              <label for="started_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {{ $t('tasks.targetDate') }}
               </label>
               <input
+                id="started_at"
                 v-model="form.started_at"
                 type="date"
                 class="form-input"
@@ -94,36 +97,36 @@
             <div>
               <ToggleSwitch
                 v-model="form.is_recurring"
-                label="Recurring Task"
+                :label="$t('tasks.daily.recurringTask')"
               />
             </div>
             <div v-if="form.is_recurring">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Recurrence Type
+              <label for="recurrence_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {{ $t('tasks.daily.recurrenceType') }}
               </label>
-              <select v-model="form.recurrence_type" class="form-input">
-                <option value="DAILY">Daily</option>
-                <option value="WEEKLY">Weekly</option>
-                <option value="MONTHLY">Monthly</option>
-                <option value="YEARLY">Yearly</option>
-                <option value="EVERY_X_DAYS">Every X Days</option>
-                <option value="EVERY_X_WEEKS">Every X Weeks</option>
-                <option value="EVERY_X_MONTHS">Every X Months</option>
-                <option value="WEEKLY_ON_DAYS">Weekly on Specific Days</option>
-                <option value="MONTHLY_ON_DAYS">Monthly on Specific Days</option>
-                <option value="WEEK_OF_MONTH_ON_DAYS">Specific Week Days of Month</option>
+              <select id="recurrence_type" v-model="form.recurrence_type" class="form-input">
+                <option value="DAILY">{{ $t('tasks.daily.daily') }}</option>
+                <option value="WEEKLY">{{ $t('tasks.daily.weekly') }}</option>
+                <option value="MONTHLY">{{ $t('tasks.daily.monthly') }}</option>
+                <option value="YEARLY">{{ $t('tasks.daily.yearly') }}</option>
+                <option value="EVERY_X_DAYS">{{ $t('tasks.daily.everyXDays') }}</option>
+                <option value="EVERY_X_WEEKS">{{ $t('tasks.daily.everyXWeeks') }}</option>
+                <option value="EVERY_X_MONTHS">{{ $t('tasks.daily.everyXMonths') }}</option>
+                <option value="WEEKLY_ON_DAYS">{{ $t('tasks.daily.weeklyOnSpecificDays') }}</option>
+                <option value="MONTHLY_ON_DAYS">{{ $t('tasks.daily.monthlyOnSpecificDays') }}</option>
+                <option value="WEEK_OF_MONTH_ON_DAYS">{{ $t('tasks.daily.specificWeekDaysOfMonth') }}</option>
               </select>
             </div>
             <div v-if="form.is_recurring && ['EVERY_X_DAYS', 'EVERY_X_WEEKS', 'EVERY_X_MONTHS'].includes(form.recurrence_type)">
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Interval
+              <label for="recurrence_interval" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                {{ $t('tasks.daily.interval') }}
               </label>
               <input
                 v-model.number="form.recurrence_interval"
                 type="number"
                 min="1"
                 class="form-input"
-                placeholder="e.g., 2 for every 2 days"
+                :placeholder="$t('tasks.daily.intervalPlaceholder')"
               />
             </div>
             
@@ -133,7 +136,7 @@
                 <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span class="section-title">{{ $t('tasks.recurrence.selectDaysOfWeek') }}</span>
+                <span class="section-title">{{ $t('tasks.daily.selectDaysOfWeek') }}</span>
               </div>
               <div class="day-selector p-4">
                 <div class="grid grid-cols-7 gap-2">
@@ -156,7 +159,7 @@
                 <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <span class="section-title">{{ $t('tasks.recurrence.selectDaysOfMonth') }}</span>
+                <span class="section-title">{{ $t('tasks.daily.selectDaysOfMonth') }}</span>
               </div>
               <div class="day-selector p-4 mb-4">
                 <div class="grid grid-cols-8 gap-1">
@@ -179,7 +182,7 @@
                 <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <span class="section-title">{{ $t('tasks.recurrence.selectWeeksOfMonth') }}</span>
+                <span class="section-title">{{ $t('tasks.daily.selectWeeksOfMonth') }}</span>
               </div>
               <div class="week-selector p-4">
                 <div class="grid grid-cols-4 gap-3">
@@ -202,14 +205,15 @@
             <div>
               <ToggleSwitch
                 v-model="form.show_progress"
-                label="Show Progress Bar"
+                :label="$t('tasks.daily.showProgressBar')"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Target Completion Date (Optional)
+              <label for="target_completion_at" class="block text-sm font-medium text-gray-700 mb-1">
+                {{ $t('tasks.daily.targetCompletionDate') }} {{ $t('common.optional') }}
               </label>
               <input
+                id="target_completion_at"
                 v-model="form.target_completion_at"
                 type="date"
                 class="form-input"
@@ -220,32 +224,34 @@
           <!-- HABIT specific fields -->
           <div v-if="form.task_type === 'HABIT'" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Habit Type
+              <label for="habit_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {{ $t('tasks.habit.habitType') }}
               </label>
-              <select v-model="form.habit_type" class="form-input">
-                <option value="GOOD">Good Habit</option>
-                <option value="BAD">Bad Habit</option>
+              <select id="habit_type" v-model="form.habit_type" class="form-input">
+                <option value="GOOD">{{ $t('tasks.habit.goodHabit') }}</option>
+                <option value="BAD">{{ $t('tasks.habit.badHabit') }}</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Target Count
+              <label for="threshold_count" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {{ $t('tasks.habit.targetCount') }}
               </label>
               <input
+                id="threshold_count"
                 v-model.number="form.threshold_count"
                 type="number"
                 min="1"
                 class="form-input"
-                placeholder="Target number of times"
+                  :placeholder="$t('tasks.habit.targetCountPlaceholder')"
               />
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Time Range
+                <label for="time_range_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ $t('tasks.habit.timeRange') }}
                 </label>
                 <input
+                  id="time_range_value"
                   v-model.number="form.time_range_value"
                   type="number"
                   min="1"
@@ -253,13 +259,13 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Period
+                <label for="time_range_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ $t('tasks.habit.period') }}
                 </label>
-                <select v-model="form.time_range_type" class="form-input">
-                  <option value="DAYS">Days</option>
-                  <option value="WEEKS">Weeks</option>
-                  <option value="MONTHS">Months</option>
+                <select id="time_range_type" v-model="form.time_range_type" class="form-input">
+                  <option value="DAYS">{{ $t('tasks.days') }}</option>
+                  <option value="WEEKS">{{ $t('tasks.weeks') }}</option>
+                  <option value="MONTHS">{{ $t('tasks.months') }}</option>
                 </select>
               </div>
             </div>

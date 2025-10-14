@@ -1,4 +1,5 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 type EmitFn = (e: 'update:modelValue', value: string) => void
 
@@ -7,14 +8,15 @@ interface UseTaskStatusDropdownProps {
 }
 
 export function useTaskStatusDropdown(props: UseTaskStatusDropdownProps, emit: EmitFn) {
+  const { t } = useI18n()
   const isOpen = ref(false)
   const dropdownContainer = ref<HTMLElement>()
   const dropdownStyle = ref({})
 
   const options = [
-    { value: 'all', label: 'All' },
-    { value: 'incomplete', label: 'Incomplete' },
-    { value: 'complete', label: 'Complete' }
+    { value: 'all', label: t('tasks.all') },
+    { value: 'incomplete', label: t('tasks.incomplete') },
+    { value: 'complete', label: t('tasks.complete') }
   ]
 
   const selectedOption = computed(() => {

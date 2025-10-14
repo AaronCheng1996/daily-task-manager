@@ -37,7 +37,7 @@
             </label>
             <select id="language" v-model="form.language" class="form-input">
               <option value="en">🇺🇸 English</option>
-              <option value="zhTW">🇹🇼 Traditional Chinese</option>
+              <option value="zhTW">🇹🇼 繁體中文</option>
             </select>
           </div>
 
@@ -46,50 +46,50 @@
               {{ $t('profile.timezone') }}
             </label>
             <select id="timezone" v-model="form.timezone" class="form-input">
-              <option value="UTC">UTC</option>
-              <option value="America/New_York">Eastern Time</option>
-              <option value="America/Los_Angeles">Pacific Time</option>
-              <option value="Europe/London">London</option>
+              <option value="UTC">{{ $t('profile.utc') }}</option>
+              <option value="America/New_York">{{ $t('profile.easternTime') }}</option>
+              <option value="America/Los_Angeles">{{ $t('profile.pacificTime') }}</option>
+              <option value="Europe/London">{{ $t('profile.london') }}</option>
               <option value="Asia/Tokyo">Tokyo</option>
-              <option value="Asia/Taipei">Taipei</option>
+              <option value="Asia/Taipei">{{ $t('profile.taipei') }}</option>
             </select>
           </div>
         </div>
 
-        <h2 class="text-xl font-semibold mb-6 mt-8">Preferences</h2>
+        <h2 class="text-xl font-semibold mb-6 mt-8">{{ $t('profile.preferences') }}</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Theme
+              {{ $t('profile.theme') }}
             </label>
             <select id="theme" v-model="form.theme" class="form-input">
-              <option value="auto">🌓 Auto (System)</option>
-              <option value="light">☀️ Light</option>
-              <option value="dark">🌙 Dark</option>
+              <option value="auto">🌓 {{ $t('profile.auto') }} ({{ $t('profile.system') }})</option>
+              <option value="light">☀️ {{ $t('profile.light') }}</option>
+              <option value="dark">🌙 {{ $t('profile.dark') }}</option>
             </select>
           </div>
 
           <div>
             <label for="defaultTaskFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Default Task Filter
+              {{ $t('profile.defaultTaskFilter') }}
             </label>
             <select id="defaultTaskFilter" v-model="form.defaultTaskFilter" class="form-input">
-              <option value="incomplete">Incomplete Only</option>
-              <option value="complete">Complete Only</option>
-              <option value="all">All Tasks</option>
+              <option value="incomplete">{{ $t('profile.incompleteOnly') }}</option>
+              <option value="complete">{{ $t('profile.completeOnly') }}</option>
+              <option value="all">{{ $t('profile.allTasks') }}</option>
             </select>
           </div>
           
           <div>
             <label for="defaultTaskType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Default Task Type
+              {{ $t('profile.defaultTaskType') }}
             </label>
             <select id="defaultTaskType" v-model="form.defaultTaskType" class="form-input">
-              <option value="todo">Todo</option>
-              <option value="habit">Habits</option>
-              <option value="daily">Daily Tasks</option>
-              <option value="longterm">Long-term</option>
+              <option value="todo">{{ $t('profile.todo') }}</option>
+              <option value="habit">{{ $t('profile.habits') }}</option>
+              <option value="daily">{{ $t('profile.dailyTasks') }}</option>
+              <option value="longterm">{{ $t('profile.longterm') }}</option>
             </select>
           </div>
         </div>
@@ -110,14 +110,14 @@
               @click="resetForm"
               class="btn btn-secondary"
             >
-              Reset
+              {{ $t('common.reset') }}
             </button>
             <button
               type="submit"
               :disabled="userStore.loading"
               class="btn btn-primary"
             >
-              {{ userStore.loading ? $t('common.loading') : $t('profile.updateProfile') }}
+              {{ userStore.loading ? $t('common.loading') : $t('common.update') }}
             </button>
           </div>
         </div>

@@ -2,12 +2,13 @@ import { reactive, ref, onMounted, computed } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
+import { useI18n } from 'vue-i18n'
 
 export function useProfileView() {
   const userStore = useUserStore()
   const themeStore = useThemeStore()
   const preferencesStore = usePreferencesStore()
-  
+  const { t } = useI18n()
   const successMessage = ref('')
   const passwordError = ref('')
   const passwordSuccessMessage = ref('')
@@ -74,7 +75,7 @@ export function useProfileView() {
       
       // userStore.updateProfile now handles syncing with themeStore and preferencesStore
       
-      successMessage.value = 'Updated successfully!'
+      successMessage.value = t('common.updatedSuccessfully')
       setTimeout(() => {
         successMessage.value = ''
       }, 3000)
@@ -89,12 +90,12 @@ export function useProfileView() {
     passwordSuccessMessage.value = ''
     
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      passwordError.value = 'New passwords do not match'
+      passwordError.value = t('common.newPasswordsDoNotMatch')
       return
     }
 
     if (passwordForm.newPassword.length < 6) {
-      passwordError.value = 'New password must be at least 6 characters long'
+      passwordError.value = t('common.newPasswordMustBeAtLeast6CharactersLong')
       return
     }
 
@@ -105,13 +106,13 @@ export function useProfileView() {
         oldPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       })
-      passwordSuccessMessage.value = 'Password changed successfully!'
+      passwordSuccessMessage.value = t('common.passwordChangedSuccessfully')
       resetPasswordForm()
       setTimeout(() => {
         passwordSuccessMessage.value = ''
       }, 3000)
     } catch (error: any) {
-      passwordError.value = error.response?.data?.error || 'Failed to change password'
+        passwordError.value = error.response?.data?.error || t('common.failedToChangePassword')
     } finally {
       passwordLoading.value = false
     }

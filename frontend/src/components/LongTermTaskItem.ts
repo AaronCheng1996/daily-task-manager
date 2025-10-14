@@ -3,6 +3,7 @@ import { format, parseISO } from 'date-fns'
 import type { LongTermTask, Milestone } from '@/types'
 import { taskApi } from '@/utils/api'
 import { useTaskStore } from '@/stores/taskStore'
+import { useI18n } from 'vue-i18n'
 
 type EmitFn = {
   (evt: 'edit', task: LongTermTask): void
@@ -16,7 +17,7 @@ interface UseLongTermTaskItemProps {
 
 export function useLongTermTaskItem(props: UseLongTermTaskItemProps, emit: EmitFn) {
   const taskStore = useTaskStore()
-  
+  const { t } = useI18n()
   const showMilestones = ref(false)
   const showAddMilestone = ref(false)
   const loadingMilestone = ref(false)
@@ -68,10 +69,10 @@ export function useLongTermTaskItem(props: UseLongTermTaskItemProps, emit: EmitF
     if (!props.task.stat) return ''
     
     const { isOverdue, daysToTarget } = props.task.stat
-    if (isOverdue) return `${Math.abs(daysToTarget)} days overdue`
-    if (daysToTarget === 0) return 'Due today'
-    if (daysToTarget === 1) return '1 day left'
-    return `${daysToTarget} days left`
+    if (isOverdue) return `${Math.abs(daysToTarget)} ${t('tasks.longterm.daysAgo')}`
+    if (daysToTarget === 0) return t('tasks.longterm.dueToday')
+    if (daysToTarget === 1) return t('tasks.longterm.oneDayLeft')
+    return `${daysToTarget} ${t('tasks.longterm.daysLeft')}`
   }
 
   const recalculateStatistics = () => {
@@ -103,7 +104,7 @@ export function useLongTermTaskItem(props: UseLongTermTaskItemProps, emit: EmitF
       showAddMilestone.value = false
     } catch (error) {
       console.error('Failed to create milestone:', error)
-      alert('Failed to create milestone')
+      alert(t('tasks.longterm.failedToCreateMilestone'))
     } finally {
       loadingMilestone.value = false
     }
@@ -129,14 +130,14 @@ export function useLongTermTaskItem(props: UseLongTermTaskItemProps, emit: EmitF
       recalculateStatistics()
     } catch (error) {
       console.error('Failed to toggle milestone:', error)
-      alert('Failed to update milestone')
+      alert(t('tasks.longterm.failedToUpdateMilestone'))
     } finally {
       loadingMilestone.value = false
     }
   }
 
   const deleteMilestone = async (milestoneId: string) => {
-    if (!confirm('Are you sure you want to delete this milestone?')) return
+    if (!confirm(t('tasks.longterm.areYouSureYouWantToDeleteThisMilestone'))) return
     
     loadingMilestone.value = true
     
@@ -152,7 +153,7 @@ export function useLongTermTaskItem(props: UseLongTermTaskItemProps, emit: EmitF
       recalculateStatistics()
     } catch (error) {
       console.error('Failed to delete milestone:', error)
-      alert('Failed to delete milestone')
+      alert(t('tasks.longterm.failedToDeleteMilestone'))
     } finally {
       loadingMilestone.value = false
     }
@@ -187,7 +188,7 @@ export function useLongTermTaskItem(props: UseLongTermTaskItemProps, emit: EmitF
       recalculateStatistics()
     } catch (error) {
       console.error('Failed to update milestone:', error)
-      alert('Failed to update milestone')
+      alert(t('tasks.longterm.failedToUpdateMilestone'))
     } finally {
       loadingMilestone.value = false
     }
@@ -231,7 +232,7 @@ export function useLongTermTaskItem(props: UseLongTermTaskItemProps, emit: EmitF
       await taskApi.reorderMilestones(props.task.id, milestoneOrders)
     } catch (error) {
       console.error('Failed to reorder milestones:', error)
-      alert('Failed to save milestone order. Please refresh the page.')
+      alert(t('tasks.longterm.failedToSaveMilestoneOrder'))
     }
   }
 

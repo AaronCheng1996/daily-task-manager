@@ -21,12 +21,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import NavBar from '@/components/NavBar.vue'
 import { useUserStore } from '@/stores/userStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { usePreferencesStore } from '@/stores/preferencesStore'
 
+const { locale } = useI18n()
 const userStore = useUserStore()
 const themeStore = useThemeStore()
 const preferencesStore = usePreferencesStore()
@@ -35,5 +37,20 @@ onMounted(() => {
   userStore.restoreSession()
   themeStore.initializeTheme()
   preferencesStore.initializePreferences()
+  
+  // Apply saved language on mount
+  if (userStore.user?.preference_setting?.language) {
+    locale.value = userStore.user.preference_setting.language
+  }
 })
+
+// Watch for language changes in user preferences
+watch(
+  () => userStore.user?.preference_setting?.language,
+  (newLanguage) => {
+    if (newLanguage) {
+      locale.value = newLanguage
+    }
+  }
+)
 </script>

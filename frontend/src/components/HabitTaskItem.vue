@@ -18,7 +18,7 @@
               class="text-xs px-2 py-1 rounded-full"
               :class="habit.habit_type === 'GOOD' ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300' : 'bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-300'"
             >
-              {{ habit.habit_type === 'GOOD' ? 'Good Habit' : 'Bad Habit' }}
+              {{ habit.habit_type === 'GOOD' ? $t('tasks.habit.goodHabit') : $t('tasks.habit.badHabit') }}
             </span>
           </div>
           
@@ -29,7 +29,7 @@
           <div v-if="habit.stat" class="mt-2 space-y-1">
             <div class="flex items-center space-x-4 text-sm">
               <span class="task-item-meta text-gray-600 dark:text-gray-400">
-                Progress: 
+                {{ $t('tasks.habit.progress') }}: 
                 <span class="font-medium" :class="successClass">
                   {{ habit.stat.completionCount }} / {{ habit.threshold_count }}
                 </span>
@@ -38,7 +38,7 @@
                 </span>
               </span>
               <span v-if="habit.stat.daysSinceLastCompletion >= 0" class="text-gray-600">
-                Last: {{ formatDaysSinceCompletion(habit.stat.daysSinceLastCompletion) }}
+                {{ $t('tasks.habit.last') }}: {{ formatDaysSinceCompletion(habit.stat.daysSinceLastCompletion) }}
               </span>
             </div>
             
@@ -64,7 +64,7 @@
         <button
           @click="showStatistics = !showStatistics"
           class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-          title="View statistics"
+          :title="$t('tasks.habit.viewStatistics')"
         >
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
             <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
@@ -91,7 +91,7 @@
     </div>
 
     <div v-if="showStatistics && habit.stat" class="mt-4 pt-4 border-t border-gray-100">
-      <h4 class="text-sm font-medium text-gray-700 mb-2">Recent Activity</h4>
+      <h4 class="text-sm font-medium text-gray-700 mb-2">{{ $t('tasks.habit.recentActivity') }}</h4>
       
       <div v-if="habit.stat.completionHistory.length > 0" class="space-y-1">
         <div 
@@ -100,11 +100,11 @@
           class="flex justify-between text-xs text-gray-600"
         >
           <span>{{ formatDate(record.date) }}</span>
-          <span class="font-medium">{{ record.count }} time(s)</span>
+          <span class="font-medium">{{ record.count }} {{ $t('tasks.habit.times') }}</span>
         </div>
       </div>
       <div v-else class="text-xs text-gray-400 italic">
-        No recent completions
+        {{ $t('tasks.habit.noRecentCompletions') }}
       </div>
     </div>
   </div>

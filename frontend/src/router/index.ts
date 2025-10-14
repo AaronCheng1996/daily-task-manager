@@ -6,16 +6,10 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'task',
-      component: () => import('@/views/TasksView.vue'),
+      name: 'home',
+      component: () => import('@/views/HomeView.vue'),
       meta: { requiresAuth: true }
     },
-    // {
-    //   path: '/',
-    //   name: 'home',
-    //   component: () => import('@/views/HomeView.vue'),
-    //   meta: { requiresAuth: true }
-    // },
     {
       path: '/login',
       name: 'login', 
@@ -48,7 +42,7 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const userStore = useUserStore()
   
   if (to.meta.requiresAuth && !userStore.isAuthenticated) {

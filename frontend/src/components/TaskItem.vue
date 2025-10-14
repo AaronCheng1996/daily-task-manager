@@ -58,7 +58,7 @@
             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M12 2L8.5 8.5H2l5.27 3.83L5.54 18 12 14.17 18.46 18l-1.73-5.67L22 8.5h-6.5z" clip-rule="evenodd" />
             </svg>
-            Priority {{ task.importance }}
+            {{ $t('tasks.priority') }} {{ task.importance }}
           </span>
           
           <!-- Due Date Badge -->
