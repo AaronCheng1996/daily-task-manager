@@ -6,7 +6,7 @@
         <span class="text-gray-800 dark:text-gray-200">{{ $t('home.hello') }}</span>
         <span class="gradient-text">{{ userStore.user?.username }}!</span>
       </h1>
-      <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">{{ $t('navigation.dashboard') }}</p>
+      <p class="text-lg text-secondary mb-6">{{ $t('navigation.dashboard') }}</p>
       
       <!-- Quick Action Buttons -->
       <div class="flex flex-wrap justify-center gap-3 mb-6">

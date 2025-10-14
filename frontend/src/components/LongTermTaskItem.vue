@@ -18,11 +18,11 @@
             </span>
           </div>
           
-          <p v-if="task.description" class="text-sm text-gray-600 mt-1 dark:text-gray-400">
+          <p v-if="task.description" class="text-sm text-secondary mt-1">
             {{ task.description }}
           </p>
 
-          <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+          <div class="flex items-center space-x-4 mt-2 text-xs text-muted">
             <span v-if="task.target_completion_at">
               {{ $t('tasks.longterm.target') }}: {{ formatDate(task.target_completion_at) }}
               <span v-if="task.stat?.daysToTarget !== undefined" 
@@ -39,7 +39,7 @@
         <div class="flex items-center space-x-2">
           <button
             @click="showMilestones = !showMilestones"
-            class="p-2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-600"
+            class="icon-btn-default"
             :title="$t('tasks.longterm.toggleMilestones')"
           >
             <svg 
@@ -53,7 +53,7 @@
           </button>
           <button
             @click="$emit('edit', task)"
-            class="p-2 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-600"
+            class="icon-btn-default"
           >
             <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.828-2.828z" />
@@ -61,7 +61,7 @@
           </button>
           <button
             @click="$emit('delete', task.id)"
-            class="p-2 text-gray-400 hover:text-danger-600 transition-colors dark:text-gray-400 dark:hover:text-danger-600"
+            class="icon-btn-danger"
           >
             <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -72,7 +72,7 @@
 
       <div v-if="task.show_progress && task.stat" class="space-y-2">
         <div class="flex justify-between text-sm dark:text-gray-400">
-          <span class="text-gray-600">{{ $t('tasks.longterm.progress') }}</span>
+          <span class="text-secondary">{{ $t('tasks.longterm.progress') }}</span>
           <span class="font-medium" :class="progressClass">
             {{ formatProgress(task.stat.progress) }}%
           </span>
@@ -194,7 +194,7 @@
                     <h5 class="text-sm font-medium" :class="{ 'line-through text-gray-500 dark:text-gray-400': element.is_completed }">
                       {{ element.title }}
                     </h5>
-                    <p v-if="element.description" class="text-xs text-gray-600 mt-1 dark:text-gray-400">
+                    <p v-if="element.description" class="text-xs text-secondary mt-1">
                       {{ element.description }}
                     </p>
                     <span v-if="element.completion_at" class="text-xs text-gray-400 dark:text-gray-400">
@@ -206,7 +206,7 @@
                 <div class="flex items-center space-x-1">
                   <button
                     @click="startEditMilestone(element)"
-                    class="p-1 text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-600"
+                    class="p-1 icon-btn-default"
                     :title="$t('tasks.longterm.editMilestone')"
                   >
                     <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
@@ -228,7 +228,7 @@
           </draggable>
         </div>
         
-        <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400">
+        <div v-else class="text-center py-4 text-muted">
           <p class="text-sm">{{ $t('tasks.longterm.noMilestonesYet') }}</p>
           <button
             @click="handleAddMilestoneClick"

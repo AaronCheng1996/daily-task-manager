@@ -149,10 +149,6 @@ REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret-key
 ```
 
-### Todo
-- css classification
-- Review daily task schedule feature & filter untriggered day's task
-
 ### Planning
 - Add star task that show on Home page
 - Home page format
@@ -160,5 +156,6 @@ JWT_SECRET=your-secret-key
 - Auto deploy on github
 
 ### Issue
+- Review daily task schedule feature & filter untriggered day's task
 - daily task didn't update statistics
 - daily task statistics style in dark mode

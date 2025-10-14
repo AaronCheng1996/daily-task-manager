@@ -94,12 +94,58 @@
   }
   
   /* ===== Form Components ===== */
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+  
   .form-input {
     @apply block w-full px-4 py-3 border rounded-xl shadow-soft transition-all duration-200;
     @apply border-gray-300 dark:border-slate-600;
     @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm;
     @apply focus:bg-white dark:focus:bg-slate-800;
     @apply dark:text-gray-100 dark:placeholder-gray-400;
+  }
+  
+  .form-group {
+    @apply space-y-1;
+  }
+  
+  .form-error {
+    @apply text-danger-600 dark:text-danger-400 text-sm;
+  }
+  
+  .form-hint {
+    @apply text-gray-500 dark:text-gray-400 text-xs mt-1;
+  }
+  
+  /* ===== Icon Button Components ===== */
+  .icon-btn {
+    @apply p-2 transition-colors;
+  }
+  
+  .icon-btn-default {
+    @apply icon-btn text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-200;
+  }
+  
+  .icon-btn-danger {
+    @apply icon-btn text-gray-400 hover:text-danger-600 dark:text-gray-400 dark:hover:text-danger-400;
+  }
+  
+  .icon-btn-primary {
+    @apply icon-btn text-gray-400 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400;
+  }
+  
+  /* ===== Text Variants ===== */
+  .text-secondary {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+  
+  .text-muted {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+  
+  .text-subtle {
+    @apply text-gray-400 dark:text-gray-500;
   }
   
   /* ===== Card System ===== */

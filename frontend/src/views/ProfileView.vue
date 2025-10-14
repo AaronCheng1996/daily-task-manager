@@ -5,7 +5,7 @@
         <h2 class="text-xl font-semibold mb-6">{{ $t('profile.title') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="username" class="form-label">
               {{ $t('auth.username') }}
             </label>
             <input
@@ -19,7 +19,7 @@
           </div>
 
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="email" class="form-label">
               {{ $t('auth.email') }}
             </label>
             <input
@@ -32,7 +32,7 @@
           </div>
 
           <div>
-            <label for="language" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="language" class="form-label">
               {{ $t('profile.language') }}
             </label>
             <select id="language" v-model="form.language" class="form-input">
@@ -42,7 +42,7 @@
           </div>
 
           <div>
-            <label for="timezone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="timezone" class="form-label">
               {{ $t('profile.timezone') }}
             </label>
             <select id="timezone" v-model="form.timezone" class="form-input">
@@ -60,7 +60,7 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="theme" class="form-label">
               {{ $t('profile.theme') }}
             </label>
             <select id="theme" v-model="form.theme" class="form-input">
@@ -71,7 +71,7 @@
           </div>
 
           <div>
-            <label for="defaultTaskFilter" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="defaultTaskFilter" class="form-label">
               {{ $t('profile.defaultTaskFilter') }}
             </label>
             <select id="defaultTaskFilter" v-model="form.defaultTaskFilter" class="form-input">
@@ -82,7 +82,7 @@
           </div>
           
           <div>
-            <label for="defaultTaskType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="defaultTaskType" class="form-label">
               {{ $t('profile.defaultTaskType') }}
             </label>
             <select id="defaultTaskType" v-model="form.defaultTaskType" class="form-input">
@@ -96,10 +96,10 @@
         
         <div class="flex items-center justify-between">
           <div class="flex-1">
-            <div v-if="userStore.error" class="text-danger-600 text-sm">
+            <div v-if="userStore.error" class="form-error">
               {{ userStore.error }}
             </div>
-            <div v-if="successMessage" class="text-success-600 text-sm">
+            <div v-if="successMessage" class="text-success-600 dark:text-success-400 text-sm">
               {{ successMessage }}
             </div>
           </div>
@@ -130,7 +130,7 @@
       
       <form @submit.prevent="handlePasswordReset" class="space-y-6">
         <div>
-          <label for="current-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="current-password" class="form-label">
             {{ $t('profile.currentPassword') }}
           </label>
           <input
@@ -144,7 +144,7 @@
         </div>
 
         <div>
-          <label for="new-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="new-password" class="form-label">
             {{ $t('profile.newPassword') }}
           </label>
           <input
@@ -159,7 +159,7 @@
         </div>
 
         <div>
-          <label for="confirm-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="confirm-password" class="form-label">
             {{ $t('profile.confirmNewPassword') }}
           </label>
           <input
@@ -175,10 +175,10 @@
 
         <div class="flex items-center justify-between">
           <div class="flex-1">
-            <div v-if="passwordError" class="text-danger-600 text-sm">
+            <div v-if="passwordError" class="form-error">
               {{ passwordError }}
             </div>
-            <div v-if="passwordSuccessMessage" class="text-success-600 text-sm">
+            <div v-if="passwordSuccessMessage" class="text-success-600 dark:text-success-400 text-sm">
               {{ passwordSuccessMessage }}
             </div>
           </div>

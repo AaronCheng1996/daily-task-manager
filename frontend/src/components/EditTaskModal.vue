@@ -6,7 +6,7 @@
           <h2 class="text-xl font-semibold">Edit Task</h2>
           <button
             @click="$emit('close')"
-            class="text-gray-400 hover:text-gray-600 transition-colors dark:text-gray-400 dark:hover:text-gray-200"
+            class="icon-btn-default"
           >
             <svg class="w-6 h-6" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -16,7 +16,7 @@
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
-            <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="title" class="form-label">
               {{ $t('tasks.taskTitle') }}
             </label>
             <input
@@ -31,7 +31,7 @@
           </div>
 
           <div>
-            <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="description" class="form-label">
               {{ $t('tasks.description') }}
             </label>
             <textarea
@@ -44,7 +44,7 @@
           </div>
 
           <div>
-            <label for="task_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="task_type" class="form-label">
               {{ $t('tasks.taskType') }}
             </label>
             <select id="task_type" v-model="form.task_type" class="form-input" disabled>
@@ -53,11 +53,11 @@
               <option value="DAILY_TASK">{{ $t('tasks.taskTypes.DAILY_TASK') }}</option>
               <option value="LONG_TERM">{{ $t('tasks.taskTypes.LONG_TERM') }}</option>
             </select>
-            <p class="text-xs text-gray-500 mt-1">{{ $t('tasks.taskTypeCannotBeChanged') }}</p>
+            <p class="form-hint">{{ $t('tasks.taskTypeCannotBeChanged') }}</p>
           </div>
 
           <div>
-            <label for="importance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="importance" class="form-label">
               {{ $t('tasks.importance') }} (1-5)
             </label>
             <input
@@ -71,7 +71,7 @@
           </div>
 
           <div v-if="form.task_type === 'TODO'">
-            <label for="due_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="due_at" class="form-label">
               {{ $t('tasks.dueDate') }} {{ $t('common.optional') }}
             </label>
             <input
@@ -85,7 +85,7 @@
           <!-- HABIT specific fields -->
           <div v-if="form.task_type === 'HABIT'" class="space-y-4">
             <div>
-              <label for="habit_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label for="habit_type" class="form-label">
                 {{ $t('tasks.habit.habitType') }}
               </label>
               <select id="habit_type" v-model="form.habit_type" class="form-input">
@@ -94,7 +94,7 @@
               </select>
             </div>
             <div>
-              <label for="threshold_count" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label for="threshold_count" class="form-label">
                 {{ $t('tasks.habit.targetCount') }}
               </label>
               <input
@@ -108,7 +108,7 @@
             </div>
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label for="time_range_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label for="time_range_value" class="form-label">
                   {{ $t('tasks.habit.timeRange') }}
                 </label>
                 <input
@@ -120,7 +120,7 @@
                 />
               </div>
               <div>
-                <label for="time_range_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label for="time_range_type" class="form-label">
                   {{ $t('tasks.habit.period') }}
                 </label>
                 <select id="time_range_type" v-model="form.time_range_type" class="form-input">
@@ -135,7 +135,7 @@
           <!-- DAILY_TASK specific fields -->
           <div v-if="form.task_type === 'DAILY_TASK'" class="space-y-4">
             <div>
-              <label for="started_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label for="started_at" class="form-label">
                 {{ $t('tasks.targetDate') }}
               </label>
               <input
@@ -152,7 +152,7 @@
               />
             </div>
             <div v-if="form.is_recurring">
-              <label for="recurrence_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label for="recurrence_type" class="form-label">
                 {{ $t('tasks.daily.recurrenceType') }}
               </label>
               <select id="recurrence_type" v-model="form.recurrence_type" class="form-input">
@@ -169,7 +169,7 @@
               </select>
             </div>
             <div v-if="form.is_recurring && ['EVERY_X_DAYS', 'EVERY_X_WEEKS', 'EVERY_X_MONTHS'].includes(form.recurrence_type)">
-              <label for="recurrence_interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label for="recurrence_interval" class="form-label">
                 {{ $t('tasks.daily.interval') }}
               </label>
               <input
@@ -262,7 +262,7 @@
               />
             </div>
             <div>
-              <label for="target_completion_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label for="target_completion_at" class="form-label">
                 {{ $t('tasks.daily.targetCompletionDate') }} {{ $t('common.optional') }}
               </label>
               <input
@@ -273,7 +273,7 @@
             </div>
           </div>
 
-          <div v-if="error" class="text-danger-600 text-sm dark:text-danger-400">
+          <div v-if="error" class="form-error">
             {{ error }}
           </div>
 

@@ -6,7 +6,7 @@
         <h1 class="text-2xl md:text-3xl font-bold mb-1">
           <span class="gradient-text">{{ $t('tasks.title') }}</span>
         </h1>
-        <p class="text-gray-600 text-sm">{{ $t('tasks.manageAndOrganizeAllYourTasksInOnePlace') }}</p>
+        <p class="text-secondary text-sm">{{ $t('tasks.manageAndOrganizeAllYourTasksInOnePlace') }}</p>
       </div>
       <button
         @click="showCreateTask = true"
@@ -36,7 +36,7 @@
           <button
             v-if="searchKeyword"
             @click="searchKeyword = ''"
-            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 icon-btn-default"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -85,7 +85,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       </div>
-      <p class="text-lg text-gray-600 dark:text-gray-400">{{ $t('common.loading') }}</p>
+      <p class="text-lg text-secondary">{{ $t('common.loading') }}</p>
     </div>
 
     <!-- Error State -->
@@ -176,7 +176,7 @@
         </svg>
       </div>
       <h3 class="text-2xl font-bold text-gray-900 mb-3">{{ $t('tasks.noTasksFound') }}</h3>
-      <p class="text-gray-500 mb-8 max-w-md mx-auto">
+      <p class="text-muted mb-8 max-w-md mx-auto">
         <span v-if="searchKeyword.trim()">
           {{ $t('tasks.noTasksMatchYourSearch', { searchKeyword }) }}
         </span>

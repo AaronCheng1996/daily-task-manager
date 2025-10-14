@@ -30,7 +30,7 @@
         <!-- Task Description -->
         <p 
           v-if="task.description" 
-          class="text-gray-600 mb-3 line-clamp-2 dark:text-gray-400"
+          class="text-secondary mb-3 line-clamp-2"
           :class="{ 'text-gray-400 dark:text-gray-400': task.is_completed }"
         >
           {{ task.description }}

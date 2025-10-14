@@ -5,7 +5,7 @@
       
       <form @submit.prevent="handleRegister" class="space-y-4">
         <div>
-          <label for="username" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+          <label for="username" class="form-label">
             {{ $t('auth.username') }}
           </label>
           <input
@@ -21,7 +21,7 @@
         </div>
 
         <div>
-          <label for="email" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+          <label for="email" class="form-label">
             {{ $t('auth.email') }}
           </label>
           <input
@@ -35,7 +35,7 @@
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+          <label for="password" class="form-label">
             {{ $t('auth.password') }}
           </label>
           <input
@@ -49,7 +49,7 @@
           />
         </div>
 
-        <div v-if="userStore.error" class="text-danger-600 text-sm">
+        <div v-if="userStore.error" class="form-error">
           {{ userStore.error }}
         </div>
 

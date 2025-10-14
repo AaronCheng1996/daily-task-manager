@@ -22,22 +22,22 @@
             </span>
           </div>
           
-          <p v-if="habit.description" class="text-sm task-item-meta text-gray-600 dark:text-gray-400 mt-1">
+          <p v-if="habit.description" class="text-sm text-secondary mt-1">
             {{ habit.description }}
           </p>
           
           <div v-if="habit.stat" class="mt-2 space-y-1">
             <div class="flex items-center space-x-4 text-sm">
-              <span class="task-item-meta text-gray-600 dark:text-gray-400">
+              <span class="text-secondary">
                 {{ $t('tasks.habit.progress') }}: 
                 <span class="font-medium" :class="successClass">
                   {{ habit.stat.completionCount }} / {{ habit.threshold_count }}
                 </span>
-                <span class="text-xs text-gray-400 dark:text-gray-500 ml-1">
+                <span class="text-xs text-subtle ml-1">
                   ({{ habit.stat.completionRate }}%)
                 </span>
               </span>
-              <span v-if="habit.stat.daysSinceLastCompletion >= 0" class="text-gray-600">
+              <span v-if="habit.stat.daysSinceLastCompletion >= 0" class="text-secondary">
                 {{ $t('tasks.habit.last') }}: {{ formatDaysSinceCompletion(habit.stat.daysSinceLastCompletion) }}
               </span>
             </div>
@@ -63,7 +63,7 @@
       <div class="flex items-center space-x-2">
         <button
           @click="showStatistics = !showStatistics"
-          class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+          class="icon-btn-default"
           :title="$t('tasks.habit.viewStatistics')"
         >
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
@@ -73,7 +73,7 @@
         </button>
         <button
           @click="$emit('edit', habit)"
-          class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+          class="icon-btn-default"
         >
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.828-2.828z" />
@@ -81,7 +81,7 @@
         </button>
         <button
           @click="$emit('delete', habit.id)"
-          class="p-2 text-gray-400 hover:text-danger-600 transition-colors"
+          class="icon-btn-danger"
         >
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -91,13 +91,13 @@
     </div>
 
     <div v-if="showStatistics && habit.stat" class="mt-4 pt-4 border-t border-gray-100">
-      <h4 class="text-sm font-medium text-gray-700 mb-2">{{ $t('tasks.habit.recentActivity') }}</h4>
+      <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ $t('tasks.habit.recentActivity') }}</h4>
       
       <div v-if="habit.stat.completionHistory.length > 0" class="space-y-1">
         <div 
           v-for="record in habit.stat.completionHistory.slice(0, 7)" 
           :key="record.date"
-          class="flex justify-between text-xs text-gray-600"
+          class="flex justify-between text-xs text-secondary"
         >
           <span>{{ formatDate(record.date) }}</span>
           <span class="font-medium">{{ record.count }} {{ $t('tasks.habit.times') }}</span>

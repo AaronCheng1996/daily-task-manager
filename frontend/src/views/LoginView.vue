@@ -5,7 +5,7 @@
       
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
-          <label for="usernameOrEmail" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+          <label for="usernameOrEmail" class="form-label">
             {{ $t('auth.username') }} / {{ $t('auth.email') }}
           </label>
           <input
@@ -19,7 +19,7 @@
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+          <label for="password" class="form-label">
             {{ $t('auth.password') }}
           </label>
           <input
@@ -32,7 +32,7 @@
           />
         </div>
 
-        <div v-if="userStore.error" class="text-danger-600 text-sm">
+        <div v-if="userStore.error" class="form-error">
           {{ userStore.error }}
         </div>
 
