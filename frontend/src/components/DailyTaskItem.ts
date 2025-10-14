@@ -56,9 +56,32 @@ export function useDailyTaskItem(props: UseDailyTaskItemProps, emit: EmitFn) {
     }
   }
 
+  const formatWeeklyOnDays = (days: number[]): string => {
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const { t } = useI18n()
+    const formattedDays = days.map(day => dayNames[day]).join(', ')
+    return t('tasks.daily.weeklyOnSpecificDays', { days: formattedDays })
+  }
+
+  const formatMonthlyOnDays = (days: number[]): string => {
+    const { t } = useI18n()
+    if (days.includes(-1)) {
+      return t('tasks.daily.lastDayOfMonth')
+    }
+    return t('tasks.daily.specificWeekDaysOfMonth', { days: days.join(', ') })
+  }
+
+  const formatWeekOfMonth = (weeks: number[]): string => {
+    const { t } = useI18n()
+    const weekNames = ['Last week', '1st week', '2nd week', '3rd week', '4th week']
+    const formattedWeeks = weeks.map(week => weekNames[week]).join(', ')
+    return t('tasks.daily.monthlyOnSpecificDays', { weeks: formattedWeeks })
+  }
+
   const getRecurrenceDescription = (): string => {
     const { recurrence_type, recurrence_interval, recurrence_days_of_week, recurrence_days_of_month, recurrence_weeks_of_month } = props.task
     const { t } = useI18n()
+    
     switch (recurrence_type) {
       case 'DAILY':
         return t('tasks.daily.everyDay')
@@ -75,33 +98,20 @@ export function useDailyTaskItem(props: UseDailyTaskItemProps, emit: EmitFn) {
       case 'EVERY_X_MONTHS':
         return t('tasks.daily.everyXMonths', { interval: recurrence_interval })
       case 'WEEKLY_ON_DAYS':
-        if (recurrence_days_of_week && recurrence_days_of_week.length > 0) {
-          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-          const days = recurrence_days_of_week.map(day => dayNames[day]).join(', ')
-          return t('tasks.daily.weeklyOnSpecificDays', { days })
-        }
-        return t('tasks.daily.specificWeekdays')
+        return recurrence_days_of_week?.length 
+          ? formatWeeklyOnDays(recurrence_days_of_week)
+          : t('tasks.daily.specificWeekdays')
       case 'MONTHLY_ON_DAYS':
-        if (recurrence_days_of_month && recurrence_days_of_month.length > 0) {
-          if (recurrence_days_of_month.includes(-1)) {
-            return t('tasks.daily.lastDayOfMonth')
-          }
-          const days = recurrence_days_of_month.join(', ')
-          return t('tasks.daily.specificWeekDaysOfMonth', { days })
-        }
-        return t('tasks.daily.specificDaysOfMonth')
+        return recurrence_days_of_month?.length
+          ? formatMonthlyOnDays(recurrence_days_of_month)
+          : t('tasks.daily.specificDaysOfMonth')
       case 'WEEK_OF_MONTH_ON_DAYS':
-        if (recurrence_days_of_week && recurrence_days_of_week.length > 0) {
-          const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-          const days = recurrence_days_of_week.map(day => dayNames[day]).join(', ')
-          return t('tasks.daily.weeklyOnSpecificDays', { days })
+        if (recurrence_days_of_week?.length) {
+          return formatWeeklyOnDays(recurrence_days_of_week)
         }
-        if (recurrence_weeks_of_month && recurrence_weeks_of_month.length > 0) {
-          const weekNames = ['Last week', '1st week', '2nd week', '3rd week', '4th week']
-          const weeks = recurrence_weeks_of_month.map(week => weekNames[week]).join(', ')
-          return t('tasks.daily.monthlyOnSpecificDays', { weeks })
-        }
-        return t('tasks.daily.specificDaysOfMonth')
+        return recurrence_weeks_of_month?.length
+          ? formatWeekOfMonth(recurrence_weeks_of_month)
+          : t('tasks.daily.specificDaysOfMonth')
       default:
         return t('tasks.daily.customSchedule')
     }

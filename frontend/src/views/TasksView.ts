@@ -84,7 +84,7 @@ export function useTasksView() {
       const keyword = searchKeyword.value.trim().toLowerCase()
       tasks = tasks.filter(task => 
         task.title.toLowerCase().includes(keyword) ||
-        (task.description && task.description.toLowerCase().includes(keyword))
+        task.description?.toLowerCase().includes(keyword)
       )
     }
 

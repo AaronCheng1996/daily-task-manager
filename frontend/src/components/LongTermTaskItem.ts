@@ -15,7 +15,7 @@ interface UseLongTermTaskItemProps {
   task: LongTermTask
 }
 
-export function useLongTermTaskItem(props: UseLongTermTaskItemProps, emit: EmitFn) {
+export function useLongTermTaskItem(props: UseLongTermTaskItemProps, _emit: EmitFn) {
   const taskStore = useTaskStore()
   const { t } = useI18n()
   const showMilestones = ref(false)

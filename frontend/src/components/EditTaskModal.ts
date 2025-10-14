@@ -1,7 +1,7 @@
 import { reactive, ref, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/taskStore'
 import { TaskType } from '@/types'
-import type { Task, HabitTask, DailyTask, LongTermTask, TodoTask } from '@/types'
+import type { Task, HabitTask, DailyTask, LongTermTask } from '@/types'
 
 export const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
@@ -24,7 +24,7 @@ export function useEditTaskModal(props: UseEditTaskModalProps, emit: EmitFn) {
     description: '',
     task_type: TaskType.TODO,
     importance: 1,
-    // TODO fields
+
     due_at: '',
     // HABIT fields
     habit_type: 'GOOD',
@@ -72,6 +72,69 @@ export function useEditTaskModal(props: UseEditTaskModalProps, emit: EmitFn) {
     }
   }
 
+  const formatDateTimeLocal = (dateStr: string): string => {
+    const date = new Date(dateStr)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+
+  const formatDateLocal = (dateStr: string): string => {
+    const date = new Date(dateStr)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const populateTodoFields = () => {
+    if ('due_at' in props.task && props.task.due_at) {
+      form.due_at = formatDateTimeLocal(props.task.due_at)
+    }
+  }
+
+  const populateHabitFields = () => {
+    const habitTask = props.task as HabitTask
+    form.habit_type = habitTask.habit_type || 'GOOD'
+    form.threshold_count = habitTask.threshold_count || 1
+    form.time_range_value = habitTask.time_range_value || 7
+    form.time_range_type = habitTask.time_range_type || 'DAYS'
+  }
+
+  const populateDailyTaskFields = () => {
+    const dailyTask = props.task as DailyTask
+    if (dailyTask.started_at) {
+      form.started_at = formatDateLocal(dailyTask.started_at)
+    }
+    form.is_recurring = dailyTask.is_recurring ?? true
+    form.recurrence_type = dailyTask.recurrence_type || 'DAILY'
+    form.recurrence_interval = dailyTask.recurrence_interval || 1
+    form.recurrence_days_of_week = dailyTask.recurrence_days_of_week || []
+    form.recurrence_days_of_month = dailyTask.recurrence_days_of_month || []
+    form.recurrence_weeks_of_month = dailyTask.recurrence_weeks_of_month || []
+  }
+
+  const populateLongTermFields = () => {
+    const longTermTask = props.task as LongTermTask
+    form.show_progress = longTermTask.show_progress ?? true
+    if (longTermTask.target_completion_at) {
+      try {
+        const date = new Date(longTermTask.target_completion_at)
+        if (!isNaN(date.getTime())) {
+          form.target_completion_at = formatDateLocal(longTermTask.target_completion_at)
+        }
+      } catch (e) {
+        console.warn('Invalid target_completion_at:', longTermTask.target_completion_at, e)
+        form.target_completion_at = ''
+      }
+    } else {
+      form.target_completion_at = ''
+    }
+  }
+
   const populateForm = () => {
     // Populate basic fields
     form.title = props.task.title
@@ -81,57 +144,50 @@ export function useEditTaskModal(props: UseEditTaskModalProps, emit: EmitFn) {
 
     // Populate type-specific fields
     if (props.task.task_type === TaskType.TODO) {
-      const todoTask = props.task as TodoTask
-      if (todoTask.due_at) {
-        const date = new Date(todoTask.due_at)
-        // Format for datetime-local input
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const hours = String(date.getHours()).padStart(2, '0')
-        const minutes = String(date.getMinutes()).padStart(2, '0')
-        form.due_at = `${year}-${month}-${day}T${hours}:${minutes}`
-      }
+      populateTodoFields()
     } else if (props.task.task_type === TaskType.HABIT) {
-      const habitTask = props.task as HabitTask
-      form.habit_type = habitTask.habit_type || 'GOOD'
-      form.threshold_count = habitTask.threshold_count || 1
-      form.time_range_value = habitTask.time_range_value || 7
-      form.time_range_type = habitTask.time_range_type || 'DAYS'
+      populateHabitFields()
     } else if (props.task.task_type === TaskType.DAILY_TASK) {
-      const dailyTask = props.task as DailyTask
-      if (dailyTask.started_at) {
-        const date = new Date(dailyTask.started_at)
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        form.started_at = `${year}-${month}-${day}`
-      }
-      form.is_recurring = dailyTask.is_recurring ?? true
-      form.recurrence_type = dailyTask.recurrence_type || 'DAILY'
-      form.recurrence_interval = dailyTask.recurrence_interval || 1
-      form.recurrence_days_of_week = dailyTask.recurrence_days_of_week || []
-      form.recurrence_days_of_month = dailyTask.recurrence_days_of_month || []
-      form.recurrence_weeks_of_month = dailyTask.recurrence_weeks_of_month || []
+      populateDailyTaskFields()
     } else if (props.task.task_type === TaskType.LONG_TERM) {
-      const longTermTask = props.task as LongTermTask
-      form.show_progress = longTermTask.show_progress ?? true
-      if (longTermTask.target_completion_at) {
-        try {
-          const date = new Date(longTermTask.target_completion_at)
-          if (!isNaN(date.getTime())) {
-            const year = date.getFullYear()
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const day = String(date.getDate()).padStart(2, '0')
-            form.target_completion_at = `${year}-${month}-${day}`
-          }
-        } catch (e) {
-          console.warn('Invalid target_completion_at:', longTermTask.target_completion_at, e)
-          form.target_completion_at = ''
-        }
-      } else {
-        form.target_completion_at = ''
+      populateLongTermFields()
+    }
+  }
+
+  const addTodoFieldsToTaskData = (taskData: any) => {
+    taskData.due_at = form.due_at ? new Date(form.due_at).toISOString() : undefined
+  }
+
+  const addHabitFieldsToTaskData = (taskData: any) => {
+    taskData.habit_type = form.habit_type
+    taskData.threshold_count = form.threshold_count
+    taskData.time_range_value = form.time_range_value
+    taskData.time_range_type = form.time_range_type
+  }
+
+  const addDailyTaskFieldsToTaskData = (taskData: any) => {
+    if (form.started_at) {
+      taskData.started_at = new Date(form.started_at).toISOString()
+    }
+    taskData.is_recurring = form.is_recurring
+    taskData.recurrence_type = form.recurrence_type
+    taskData.recurrence_interval = form.recurrence_interval
+    taskData.recurrence_days_of_week = form.recurrence_days_of_week
+    taskData.recurrence_days_of_month = form.recurrence_days_of_month
+    taskData.recurrence_weeks_of_month = form.recurrence_weeks_of_month
+  }
+
+  const addLongTermFieldsToTaskData = (taskData: any) => {
+    taskData.show_progress = form.show_progress
+    if (form.target_completion_at?.trim()) {
+      try {
+        taskData.target_completion_at = new Date(form.target_completion_at).toISOString()
+      } catch (e) {
+        console.error('Invalid date format:', form.target_completion_at, e)
+        taskData.target_completion_at = undefined
       }
+    } else {
+      taskData.target_completion_at = undefined
     }
   }
 
@@ -148,44 +204,13 @@ export function useEditTaskModal(props: UseEditTaskModalProps, emit: EmitFn) {
 
       // Add type-specific fields
       if (form.task_type === TaskType.TODO) {
-        if (form.due_at) {
-          taskData.due_at = new Date(form.due_at).toISOString()
-        } else {
-          taskData.due_at = undefined
-        }
-      }
-
-      if (form.task_type === TaskType.HABIT) {
-        taskData.habit_type = form.habit_type
-        taskData.threshold_count = form.threshold_count
-        taskData.time_range_value = form.time_range_value
-        taskData.time_range_type = form.time_range_type
-      }
-
-      if (form.task_type === TaskType.DAILY_TASK) {
-        if (form.started_at) {
-          taskData.started_at = new Date(form.started_at).toISOString()
-        }
-        taskData.is_recurring = form.is_recurring
-        taskData.recurrence_type = form.recurrence_type
-        taskData.recurrence_interval = form.recurrence_interval
-        taskData.recurrence_days_of_week = form.recurrence_days_of_week
-        taskData.recurrence_days_of_month = form.recurrence_days_of_month
-        taskData.recurrence_weeks_of_month = form.recurrence_weeks_of_month
-      }
-
-      if (form.task_type === TaskType.LONG_TERM) {
-        taskData.show_progress = form.show_progress
-        if (form.target_completion_at && form.target_completion_at.trim()) {
-          try {
-            taskData.target_completion_at = new Date(form.target_completion_at).toISOString()
-          } catch (e) {
-            console.error('Invalid date format:', form.target_completion_at, e)
-            taskData.target_completion_at = undefined
-          }
-        } else {
-          taskData.target_completion_at = undefined
-        }
+        addTodoFieldsToTaskData(taskData)
+      } else if (form.task_type === TaskType.HABIT) {
+        addHabitFieldsToTaskData(taskData)
+      } else if (form.task_type === TaskType.DAILY_TASK) {
+        addDailyTaskFieldsToTaskData(taskData)
+      } else if (form.task_type === TaskType.LONG_TERM) {
+        addLongTermFieldsToTaskData(taskData)
       }
 
       await taskStore.updateTask(props.task.id, taskData)
