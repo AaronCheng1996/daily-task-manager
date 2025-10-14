@@ -50,7 +50,7 @@
               <option value="America/New_York">{{ $t('profile.easternTime') }}</option>
               <option value="America/Los_Angeles">{{ $t('profile.pacificTime') }}</option>
               <option value="Europe/London">{{ $t('profile.london') }}</option>
-              <option value="Asia/Tokyo">Tokyo</option>
+              <option value="Asia/Tokyo">{{ $t('profile.tokyo') }}</option>
               <option value="Asia/Taipei">{{ $t('profile.taipei') }}</option>
             </select>
           </div>

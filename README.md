@@ -158,4 +158,3 @@ JWT_SECRET=your-secret-key
 ### Issue
 - Review daily task schedule feature & filter untriggered day's task
 - daily task didn't update statistics
-- daily task statistics style in dark mode
